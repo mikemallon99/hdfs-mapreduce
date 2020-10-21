@@ -20,10 +20,14 @@ Once the program has been started, a command line interface will start. Here you
 
 # Text Interface Commands:
 - `join` Join the group based on the introducer info passed in
+- `list` List all member IDs in the group
+- `fail` Simulate a node failure, same as sending `SIGTERM` to the node
+- `id` List the current nodes ID in the group
+- `leave` Leave the group
 - `start_hdfs` Starts the distributed file system with the nodes in the current membership list 
     - **Must be in network for this to work**
-- `id` List the current nodes ID in the network/hdfs
+ ######
+*In order to run these commands, you must first run `start_hdfs` on some machine in the group:*
 - `master` List the current master ID in the hdfs
-- `fail` Simulate a node failure, same as sending `SIGTERM` to the node
 
 

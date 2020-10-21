@@ -1,8 +1,36 @@
 import argparse
+import socket
+from enum import Enum
 from failuredetector import main as failure_detector
 
 
+class CommandType(Enum):
+    MEMBERSHIP_LIST = "list"
+    DISPLAY_SELF_ID = "id"
+    JOIN = "join"
+    LEAVE = "leave"
+    FAIL = "fail"
+
+
+def cmd_thread():
+    """
+    listens for user input and executes corresponding command
+    """
+    print("Text interface with HDFS system: ")
+    host_ip = socket.gethostname()
+    while True:
+        u_input = input(f"<{host_ip} />")
+        try:
+            print(u_input)
+        except ValueError as e:
+            print("Invalid command entered!")
+
+
+
 def parse_args():
+    """
+    parse the CLI arguments
+    """
     description = '''
                 Simple implementation of a Distributed Filesystem
                 '''
@@ -32,6 +60,10 @@ if __name__ == '__main__':
         member_args = ["--introducer-host", args.host, "--introducer-port", args.port]
         print(member_args)
         failure_detector.start_fd(member_args)
+
+    # begin thread to listen for commands
+    cmd_thread()
+
 
 
 

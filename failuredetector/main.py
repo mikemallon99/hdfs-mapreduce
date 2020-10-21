@@ -248,7 +248,7 @@ def start_fd(args):
     )
     # use main thread to interact with user
     # TODO == remove this part so we can use our own
-    user_interact_thread(parsed_args)
+    # user_interact_thread(parsed_args)
     return
 
 
