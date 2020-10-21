@@ -8,13 +8,13 @@ import sys
 import os
 import logging
 
-from gossip import Gossip
-from all2all import All2All
-from utils import get_host_number_id, get_hostname
-from protocol import ProtocolBase, ProtocolType
-from utils import generate_id, get_hostname
-from messages import parse_and_validate_message
-from membership_list import MembershipList
+from .gossip import Gossip
+from .all2all import All2All
+from .utils import get_host_number_id, get_hostname
+from .protocol import ProtocolBase, ProtocolType
+from .utils import generate_id, get_hostname
+from .messages import parse_and_validate_message
+from .membership_list import MembershipList
 
 protocol = None
 mem_list = MembershipList()
@@ -173,7 +173,7 @@ def start_daemon_thread(target_func, *args):
     return thread
 
 
-def parse_args():
+def parse_args(args):
     parser = argparse.ArgumentParser(description="Simple implementation of membership list of distributed system that use either gossip or all-to-all heartbeat.")
     parser.add_argument("--host", default=get_hostname(), help="Host name of this node.")
     parser.add_argument("--port", default=3256, help="Port number to host service on.")
@@ -196,7 +196,7 @@ def parse_args():
     parser.add_argument("--introducer-port", help="Introducer's port number, required if this node is not an introducer.")
     parser.add_argument("--message-failure-rate", default=0, help="Rate of dropping message before sending. A float between 0 and 1. Simulate network package drops.")
 
-    args = parser.parse_args()
+    args = parser.parse_args(args)
     if args.introducer is False:
         if args.introducer_host is None or args.introducer_port is None:
             parser.error(
@@ -217,32 +217,40 @@ def parse_args():
     return args
 
 
-if __name__ == "__main__":
-    args = parse_args()
+def start_fd(args):
+    global protocol, in_group, self_id, mem_list
+    parsed_args = parse_args(args)
+
     logging.basicConfig(level=logging.INFO)
 
-    if ProtocolType(args.protocol) == ProtocolType.GOSSIP:
+    if ProtocolType(parsed_args.protocol) == ProtocolType.GOSSIP:
         protocol = Gossip
     else:
         protocol = All2All
 
-    in_group = args.introducer
-    if args.introducer:
-        self_id = generate_id(args.host, args.port)
-        mem_list.add_node(self_id, args.host, args.port)
+    in_group = parsed_args.introducer
+    if parsed_args.introducer:
+        self_id = generate_id(parsed_args.host, parsed_args.port)
+        mem_list.add_node(self_id, parsed_args.host, parsed_args.port)
 
     # start threads
-    start_daemon_thread(listen_thread, args.host, args.port, args.introducer)
+    start_daemon_thread(listen_thread, parsed_args.host, parsed_args.port, parsed_args.introducer)
     start_daemon_thread(
         send_thread,
-        args.host,
-        args.port,
-        args.failure_detection_time,
-        args.dissemination_time,
-        args.message_failure_rate,
+        parsed_args.host,
+        parsed_args.port,
+        parsed_args.failure_detection_time,
+        parsed_args.dissemination_time,
+        parsed_args.message_failure_rate,
     )
     start_daemon_thread(
-        update_peer_status_thread, args.failure_detection_time, args.dissemination_time
+        update_peer_status_thread, parsed_args.failure_detection_time, parsed_args.dissemination_time
     )
     # use main thread to interact with user
-    user_interact_thread(args)
+    # TODO == remove this part so we can use our own
+    user_interact_thread(parsed_args)
+    return
+
+
+if __name__ == "__main__":
+    start_fd(sys.argv[1:])

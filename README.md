@@ -8,12 +8,12 @@ python \>= 3.6.8
 # how to run
 To start network (i.e. the introducer), run the command
 ```
-python3 main.py start
+python3 main.py -start
 ```
 
 Then, to start a normal node (i.e. not the introducer), run the command
 ```
-python3 main.py join -h <introducer address> -p <port>
+python3 main.py join -host <introducer address> -port <port>
 ```
 
 Once the program has been started, a command line interface will start. Here you can enter commands to begin/interact with the hdfs
