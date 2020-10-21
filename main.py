@@ -27,6 +27,7 @@ def cmd_thread():
         u_input = input(f"<{host_ip.split('.')[0]} />")
         try:
             command_t = CommandType(u_input)
+            print(command_t)
             if command_t in fd_cmds:
                 failure_detector.handle_user_input(command_t)
         except ValueError as e:
