@@ -27,13 +27,11 @@ def cmd_thread():
     host_ip = socket.gethostname()
     while True:
         u_input = input(f"<{host_ip.split('.')[0]} />")
-        command_t = CommandType(u_input)
-        cmd_string = command_t.value
         cmd_ret = None
-        if cmd_string in fd_cmds:
-            cmd_ret = failure_detector.handle_user_input(command_t)
-        elif cmd_string in dfs_cmds:
-            cmd_ret = sdfs_client.handle_user_input(command_t)
+        if u_input in fd_cmds:
+            cmd_ret = failure_detector.handle_user_input(u_input)
+        elif u_input in dfs_cmds:
+            cmd_ret = sdfs_client.handle_user_input(u_input)
         print(cmd_ret)
 
 
