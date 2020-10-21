@@ -217,6 +217,10 @@ def parse_args(args):
     return args
 
 
+def handle_user_input(cmd):
+    print(cmd)
+
+
 def start_fd(args):
     global protocol, in_group, self_id, mem_list
     parsed_args = parse_args(args)
