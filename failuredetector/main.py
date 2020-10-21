@@ -225,42 +225,37 @@ def handle_user_input(cmd_type):
 
     # Interpret the command
     ret_msg = 'Error, command not found'
-    try:
-        command = CommandType(cmd_type)
-        print(command)
-        if command == CommandType.SWITCH:
-            if protocol.get_type() == ProtocolType.GOSSIP:
-                logging.info("Switching from Gossip to A2A")
-                ret_msg = "Switching from Gossip to A2A"
-                protocol = All2All
-            elif protocol.get_type() == ProtocolType.ALL2ALL:
-                logging.info("Switching from A2A to Gossip")
-                ret_msg = "Switching from A2A to Gossip"
-                protocol = Gossip
-            else:
-                logging.critical("nani????????????")
-        elif command == CommandType.MEMBERSHIP_LIST:
-            logging.info(mem_list)
-            ret_msg = mem_list
-        elif command == CommandType.DISPLAY_SELF_ID:
-            logging.info(self_id)
-            ret_msg = self_id
-        elif command == CommandType.LEAVE:
-            if not in_group:
-                logging.warn("Not in group, cannot leave......")
-            else:
-                logging.info("Leaving group")
-                in_group = False
-                protocol.leave_group(self_id, mem_list)
-                self_id = None
-        elif command == CommandType.FAIL:
-            os.kill(os.getpid(), signal.SIGTERM)
+    command = CommandType(cmd_type)
+    #print(command)
+    if command == CommandType.SWITCH:
+        if protocol.get_type() == ProtocolType.GOSSIP:
+            logging.info("Switching from Gossip to A2A")
+            ret_msg = "Switching from Gossip to A2A"
+            protocol = All2All
+        elif protocol.get_type() == ProtocolType.ALL2ALL:
+            logging.info("Switching from A2A to Gossip")
+            ret_msg = "Switching from A2A to Gossip"
+            protocol = Gossip
         else:
-            logging.warn("Unkown command")
-
-    except ValueError as e:
-        all_comamnds = ", ".join([c.value for c in CommandType])
-        logging.warn(f"Invalid command. Please enter one of: {all_comamnds}")
+            logging.critical("nani????????????")
+    elif command == CommandType.MEMBERSHIP_LIST:
+        logging.info(mem_list)
+        ret_msg = mem_list
+    elif command == CommandType.DISPLAY_SELF_ID:
+        logging.info(self_id)
+        ret_msg = self_id
+    elif command == CommandType.LEAVE:
+        if not in_group:
+            logging.warn("Not in group, cannot leave......")
+        else:
+            logging.info("Leaving group")
+            in_group = False
+            protocol.leave_group(self_id, mem_list)
+            self_id = None
+    elif command == CommandType.FAIL:
+        os.kill(os.getpid(), signal.SIGTERM)
+    else:
+        logging.warn("Unkown command")
 
     return ret_msg
 
