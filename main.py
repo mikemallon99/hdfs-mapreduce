@@ -63,7 +63,7 @@ if __name__ == '__main__':
         failure_detector.start_fd(introducer_args)
     else:
         # start the node as a member
-        member_args = ["--introducer-host", args.host, "--introducer-port", args.port]
+        member_args = ["--host", args.host, "--port", args.port]
         failure_detector.start_fd(member_args)
 
     # begin thread to listen for commands
