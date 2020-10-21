@@ -37,10 +37,6 @@ def cmd_thread():
             cmd_ret = sdfs_client.handle_user_input(command_t)
         print(cmd_ret)
 
-    except ValueError as e:
-        cmd_list = ", ".join([c.value for c in CommandType])
-        print("Invalid command entered! List of accepted commands: "+cmd_list)
-
 
 def parse_args():
     """
