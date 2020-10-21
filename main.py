@@ -27,19 +27,19 @@ def cmd_thread():
     host_ip = socket.gethostname()
     while True:
         u_input = input(f"<{host_ip.split('.')[0]} />")
-        try:
-            command_t = CommandType(u_input)
-            cmd_string = command_t.value
-            cmd_ret = None
-            if cmd_string in fd_cmds:
-                cmd_ret = failure_detector.handle_user_input(command_t)
-            elif cmd_string in dfs_cmds:
-                cmd_ret = sdfs_client.handle_user_input(command_t)
-            print(cmd_ret)
+        print(u_input)
+        command_t = CommandType(u_input)
+        cmd_string = command_t.value
+        cmd_ret = None
+        if cmd_string in fd_cmds:
+            cmd_ret = failure_detector.handle_user_input(command_t)
+        elif cmd_string in dfs_cmds:
+            cmd_ret = sdfs_client.handle_user_input(command_t)
+        print(cmd_ret)
 
-        except ValueError as e:
-            cmd_list = ", ".join([c.value for c in CommandType])
-            print("Invalid command entered! List of accepted commands: "+cmd_list)
+    except ValueError as e:
+        cmd_list = ", ".join([c.value for c in CommandType])
+        print("Invalid command entered! List of accepted commands: "+cmd_list)
 
 
 def parse_args():
