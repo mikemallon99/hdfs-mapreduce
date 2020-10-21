@@ -24,10 +24,10 @@ Once the program has been started, a command line interface will start. Here you
 - `fail` Simulate a node failure, same as sending `SIGTERM` to the node
 - `id` List the current nodes ID in the group
 - `leave` Leave the group
-- `start_hdfs` Starts the distributed file system with the nodes in the current membership list 
+- `start_sdfs` Starts the distributed file system with the nodes in the current membership list 
     - **Must be in network for this to work**
  ######
-*In order to run these commands, you must first run `start_hdfs` on some machine in the group:*
+*In order to run these commands, you must first run `start_sdfs` on some machine in the group:*
 - `master` List the current master ID in the hdfs
 
 

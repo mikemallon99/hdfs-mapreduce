@@ -4,7 +4,17 @@ from enum import Enum
 from failuredetector import main as failure_detector
 
 fd_cmds = ["join", "list", "id", "leave", "fail"]
-dfs_cmds = ["start_hdfs", "master"]
+dfs_cmds = ["start_sdfs", "master"]
+
+
+class CommandType(Enum):
+    LIST = "list"
+    JOIN = "join"
+    DISP_ID = "id"
+    LEAVE = "leave"
+    FAIL = "fail"
+    START_SDFS = "start_sdfs"
+    DISP_MASTER = "master"
 
 
 def cmd_thread():
@@ -16,12 +26,10 @@ def cmd_thread():
     while True:
         u_input = input(f"<{host_ip.split('.')[0]} />")
         try:
-            if u_input in fd_cmds or u_input in dfs_cmds:
-                print("True")
+            command_t = CommandType(u_input)
+
         except ValueError as e:
-            fd_list = ", ".join([c for c in fd_cmds])
-            dfs_list = ", ".join([c for c in dfs_cmds])
-            cmd_list = fd_list+", "+dfs_list
+            cmd_list = ", ".join([c.value for c in CommandType])
             print("Invalid command entered! List of accepted commands: "+cmd_list)
 
 
