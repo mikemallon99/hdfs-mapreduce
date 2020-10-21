@@ -21,13 +21,16 @@ def parse_args():
 
 if __name__ == '__main__':
     args = parse_args()
+    print(args)
     if args.start is True:
         # start the introducer
         introducer_args = ["--introducer"]
+        print(introducer_args)
         failure_detector.start_fd(introducer_args)
     else:
         # start the node as a member
         member_args = ["--introducer-host", args.host, "--introducer-port", args.port]
+        print(member_args)
         failure_detector.start_fd(args)
 
 
