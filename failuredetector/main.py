@@ -196,7 +196,7 @@ def parse_args(args):
     parser.add_argument("--introducer-port", help="Introducer's port number, required if this node is not an introducer.")
     parser.add_argument("--message-failure-rate", default=0, help="Rate of dropping message before sending. A float between 0 and 1. Simulate network package drops.")
 
-    args = parser.parse_args(vars(args))
+    args = parser.parse_args(args)
     if args.introducer is False:
         if args.introducer_host is None or args.introducer_port is None:
             parser.error(

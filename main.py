@@ -31,7 +31,7 @@ if __name__ == '__main__':
         # start the node as a member
         member_args = ["--introducer-host", args.host, "--introducer-port", args.port]
         print(member_args)
-        failure_detector.start_fd(args)
+        failure_detector.start_fd(member_args)
 
 
 
