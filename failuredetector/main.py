@@ -225,9 +225,9 @@ def handle_user_input(cmd_type):
 
     # Interpret the command
     ret_msg = 'Error, command not found'
-    command = CommandType(cmd_type)
+    command = cmd_type
     print(command)
-    if command == CommandType.SWITCH:
+    if command == 'switch':
         if protocol.get_type() == ProtocolType.GOSSIP:
             logging.info("Switching from Gossip to A2A")
             ret_msg = "Switching from Gossip to A2A"
@@ -238,13 +238,13 @@ def handle_user_input(cmd_type):
             protocol = Gossip
         else:
             logging.critical("nani????????????")
-    elif command == CommandType.MEMBERSHIP_LIST:
+    elif command == 'list':
         logging.info(mem_list)
         ret_msg = mem_list
-    elif command == CommandType.DISPLAY_SELF_ID:
+    elif command == 'id':
         logging.info(self_id)
         ret_msg = self_id
-    elif command == CommandType.LEAVE:
+    elif command == 'leave':
         if not in_group:
             logging.warn("Not in group, cannot leave......")
         else:
@@ -252,7 +252,7 @@ def handle_user_input(cmd_type):
             in_group = False
             protocol.leave_group(self_id, mem_list)
             self_id = None
-    elif command == CommandType.FAIL:
+    elif command == 'fail':
         os.kill(os.getpid(), signal.SIGTERM)
     else:
         logging.warn("Unkown command")

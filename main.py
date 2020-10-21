@@ -27,7 +27,6 @@ def cmd_thread():
     host_ip = socket.gethostname()
     while True:
         u_input = input(f"<{host_ip.split('.')[0]} />")
-        print(u_input)
         command_t = CommandType(u_input)
         cmd_string = command_t.value
         cmd_ret = None
