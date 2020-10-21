@@ -3,13 +3,8 @@ import socket
 from enum import Enum
 from failuredetector import main as failure_detector
 
-
-class CommandType(Enum):
-    MEMBERSHIP_LIST = "list"
-    DISPLAY_SELF_ID = "id"
-    JOIN = "join"
-    LEAVE = "leave"
-    FAIL = "fail"
+fd_cmds = ["join", "list", "id", "leave", "fail"]
+dfs_cmds = ["start_hdfs", "master"]
 
 
 def cmd_thread():
@@ -21,9 +16,13 @@ def cmd_thread():
     while True:
         u_input = input(f"<{host_ip.split('.')[0]} />")
         try:
-            print(u_input)
+            if u_input in fd_cmds or u_input in dfs_cmds:
+                print("True")
         except ValueError as e:
-            print("Invalid command entered!")
+            fd_list = ", ".join([c for c in fd_cmds])
+            dfs_list = ", ".join([c for c in dfs_cmds])
+            cmd_list = fd_list+", "+dfs_list
+            print("Invalid command entered! List of accepted commands: "+cmd_list)
 
 
 
@@ -49,16 +48,13 @@ def parse_args():
 
 if __name__ == '__main__':
     args = parse_args()
-    print(args)
     if args.start is True:
         # start the introducer
         introducer_args = ["--introducer"]
-        print(introducer_args)
         failure_detector.start_fd(introducer_args)
     else:
         # start the node as a member
         member_args = ["--introducer-host", args.host, "--introducer-port", args.port]
-        print(member_args)
         failure_detector.start_fd(member_args)
 
     # begin thread to listen for commands
