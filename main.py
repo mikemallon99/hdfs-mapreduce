@@ -59,7 +59,7 @@ if __name__ == '__main__':
     args = parse_args()
     if args.start is True:
         # start the introducer
-        introducer_args = ["--introducer"]
+        introducer_args = ["--introducer", '--host', '172.22.156.162', '--port', '12345']
         failure_detector.start_fd(introducer_args)
     else:
         # start the node as a member
