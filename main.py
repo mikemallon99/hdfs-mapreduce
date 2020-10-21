@@ -19,7 +19,7 @@ def cmd_thread():
     print("Text interface with HDFS system: ")
     host_ip = socket.gethostname()
     while True:
-        u_input = input(f"<{host_ip} />")
+        u_input = input(f"<{host_ip.split('.')[0]} />")
         try:
             print(u_input)
         except ValueError as e:
