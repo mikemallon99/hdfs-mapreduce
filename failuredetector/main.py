@@ -218,7 +218,7 @@ def parse_args(args):
 
 
 def handle_user_input(cmd_type):
-    print(cmd_type.value)
+    return cmd_type.value
 
 
 def start_fd(args):
