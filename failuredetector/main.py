@@ -250,9 +250,6 @@ def start_fd(args):
     start_daemon_thread(
         update_peer_status_thread, parsed_args.failure_detection_time, parsed_args.dissemination_time
     )
-    # use main thread to interact with user
-    # TODO == remove this part so we can use our own
-    # user_interact_thread(parsed_args)
     return
 
 

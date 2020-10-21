@@ -6,7 +6,7 @@ from failuredetector import main as failure_detector
 
 
 fd_cmds = ["join", "list", "id", "leave", "fail"]
-dfs_cmds = ["start_sdfs", "master"]
+dfs_cmds = ["start_sdfs", "master"]  # TODO == add more of these
 
 
 class CommandType(Enum):
@@ -40,7 +40,6 @@ def cmd_thread():
         except ValueError as e:
             cmd_list = ", ".join([c.value for c in CommandType])
             print("Invalid command entered! List of accepted commands: "+cmd_list)
-
 
 
 def parse_args():
