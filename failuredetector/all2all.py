@@ -2,9 +2,9 @@ import socket
 import random
 import time
 
-from membership_list import MembershipList, Status
-from messages import create_message, MessageType
-from protocol import ProtocolBase, ProtocolType
+from .membership_list import MembershipList, Status
+from .messages import create_message, MessageType
+from .protocol import ProtocolBase, ProtocolType
 
 
 class All2All(ProtocolBase):

@@ -3,7 +3,7 @@ import time
 import copy
 import threading
 from enum import Enum
-from utils import get_display_id, log_to_file, get_hostname
+from .utils import get_display_id, log_to_file, get_hostname
 from typing import Iterator, Tuple
 
 

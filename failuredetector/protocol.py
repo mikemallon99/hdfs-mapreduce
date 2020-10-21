@@ -2,7 +2,7 @@ from enum import Enum
 import time
 import socket
 
-from messages import MessageType, create_message, parse_and_validate_message
+from .messages import MessageType, create_message, parse_and_validate_message
 
 
 class ProtocolType(Enum):

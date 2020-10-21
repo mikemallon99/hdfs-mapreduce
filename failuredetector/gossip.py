@@ -3,9 +3,9 @@ import random
 import time
 import math
 
-from membership_list import MembershipList, Status
-from messages import create_message, MessageType
-from protocol import ProtocolBase, ProtocolType
+from .membership_list import MembershipList, Status
+from .messages import create_message, MessageType
+from .protocol import ProtocolBase, ProtocolType
 
 NUM_SEND_PER_ROUND = 3
 APPROX_NUM_NODE = 10
