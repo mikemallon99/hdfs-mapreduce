@@ -226,7 +226,7 @@ def handle_user_input(cmd_type):
     # Interpret the command
     ret_msg = 'Error, command not found'
     command = CommandType(cmd_type)
-    #print(command)
+    print(command)
     if command == CommandType.SWITCH:
         if protocol.get_type() == ProtocolType.GOSSIP:
             logging.info("Switching from Gossip to A2A")
