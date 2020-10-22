@@ -263,6 +263,7 @@ def handle_user_input(cmd_type):
 def start_fd(args):
     global protocol, in_group, self_id, mem_list
     parsed_args = parse_args(args)
+    print(parsed_args)
 
     logging.basicConfig(level=logging.INFO)
 
