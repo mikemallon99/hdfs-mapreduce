@@ -272,6 +272,7 @@ def start_fd(args):
         protocol = All2All
 
     in_group = parsed_args.introducer
+    print(parsed_args.port)
     if parsed_args.introducer:
         self_id = generate_id(parsed_args.host, parsed_args.port)
         mem_list.add_node(self_id, parsed_args.host, parsed_args.port)
