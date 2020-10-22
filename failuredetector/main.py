@@ -33,7 +33,6 @@ def listen_thread(server_ip, port, is_introducer):
 
     while True:
         data, address = sock.recvfrom(4096)
-        logging.info(f"Message from {address}")
         request_json = parse_and_validate_message(data)
         if request_json is None:
             # The data received is not valid
@@ -228,7 +227,6 @@ def handle_user_input(cmd_type):
     # Interpret the command
     ret_msg = 'Error, command not found'
     command = cmd_type
-    print(command)
     if command == 'switch':
         if protocol.get_type() == ProtocolType.GOSSIP:
             logging.info("Switching from Gossip to A2A")
@@ -282,7 +280,6 @@ def handle_user_input(cmd_type):
 def start_fd(args):
     global protocol, in_group, self_id, mem_list, parsed_args
     parsed_args = parse_args(args)
-    print(parsed_args)
 
     logging.basicConfig(level=logging.INFO)
 

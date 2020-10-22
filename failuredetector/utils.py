@@ -7,7 +7,6 @@ LOG_FILE_NAME = "distributed.log"
 def generate_id(host: str, port: int) -> str:
     now = datetime.now().strftime("%H:%M:%S")
     node_id = f"{host}:{port}-{now}"
-    print(node_id)
     return node_id
 
 
