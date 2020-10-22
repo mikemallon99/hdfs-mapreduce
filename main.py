@@ -32,7 +32,7 @@ def cmd_thread():
             cmd_ret = failure_detector.handle_user_input(u_input)
         elif u_input in dfs_cmds:
             cmd_ret = sdfs_client.handle_user_input(u_input)
-        print(cmd_ret)
+        # print(cmd_ret)
 
 
 def parse_args():
