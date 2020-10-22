@@ -25,15 +25,13 @@ def handle_sdfs_input(cmd, arguments):
     ret_msg = "Invalid Command"
     command = CommandType(cmd)
     if command == CommandType.START_SDFS:
-        print("Here")
         if sdfs_init:
             logging.warning("SDFS already started!")
         else:
             sdfs_init = True
             # start master node on this machine
             # send message to all machines to start as slave
-            # TODO == fd adds members using socket.gethostname by default, change this?
-            print(socket.gethostname())
+            # TODO == fd adds members using socket.gethostname by default, which is the fa20-...
             logging.info("SDFS started!")
     return ret_msg
 
@@ -43,9 +41,9 @@ def cmd_thread():
     listens for user input and executes corresponding command
     """
     print("Text interface with HDFS system: ")
-    host_ip = socket.gethostname()
+    host_addr = socket.gethostname()
     while True:
-        u_input = input(f"<{host_ip.split('.')[0]} /> ")
+        u_input = input(f"<{host_addr.split('.')[0]} /> ")
 
         # check if input empty
         if u_input is not "":
@@ -60,10 +58,6 @@ def cmd_thread():
             optional_args = split_args[1:]
 
         cmd_ret = None
-        print(u_input)
-        print(split_args)
-        print(cmd)
-        print(optional_args)
         # TODO == do something with the return messages or not?
         if cmd in fd_cmds:
             if optional_args is not []:
