@@ -20,23 +20,13 @@ class CommandType(Enum):
     DISP_MASTER = "master"
 
 
-def handle_sdfs_input(user_input):
+def handle_sdfs_input(command, arguments):
     global sdfs_init
     ret_msg = "Invalid Command"
-    cmd = None
-    arg = None
-    split_arg = user_input.split()
-    if len(split_arg) == 1:
-        cmd = split_arg[0]
-    else:
-        cmd = split_arg[0]
-        arg = split_arg[1]
 
-    print(user_input)
-    print(split_arg)
-    print(cmd)
-    print(arg)
-    if cmd == CommandType.START_SDFS:
+    print(command)
+    print(arguments)
+    if command == CommandType.START_SDFS:
         if sdfs_init:
             logging.warning("SDFS already started, ignoring command...")
         else:
@@ -56,11 +46,24 @@ def cmd_thread():
     host_ip = socket.gethostname()
     while True:
         u_input = input(f"<{host_ip.split('.')[0]} />")
+
+        # check if input empty
+        if u_input is not "":
+            split_args = u_input.split()
+        else:
+            continue
+
+        # split the input into command + arguments
+        cmd = split_args[0]
+        optional_args = []
+        if len(split_args) > 1:
+            optional_args = split_args[1:]
+
         cmd_ret = None
-        if u_input in fd_cmds:
-            cmd_ret = failure_detector.handle_user_input(u_input)
-        elif u_input is not "":
-            cmd_ret = handle_sdfs_input(u_input)
+        if cmd in fd_cmds:
+            cmd_ret = failure_detector.handle_user_input(cmd)
+        elif cmd in dfs_cmds:
+            cmd_ret = handle_sdfs_input(cmd, optional_args)
         # print(cmd_ret)
 
 
