@@ -11,7 +11,7 @@ ack_available = threading.Event()
 
 class MasterNode:
     def __init__(self, nodes, node_ip):
-        self.nodetable = {}
+        self.nodetable = {}  # TODO == easier to make this a list?
         self.filetable = {}
         self.op_queue = []
         self.queue_lock = threading.Lock()

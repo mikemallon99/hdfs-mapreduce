@@ -3,11 +3,15 @@ import socket
 from enum import Enum
 from failuredetector import main as failure_detector
 import logging
+import threading
+from hdfs.master_node import MasterNode
 
 sdfs_init = False
 
 fd_cmds = ["join", "list", "id", "leave", "fail"]
 dfs_cmds = ["start_sdfs", "master"]  # TODO == add more of these
+
+START_PORT = 12344
 
 
 class CommandType(Enum):
@@ -20,6 +24,68 @@ class CommandType(Enum):
     DISP_MASTER = "master"
 
 
+def send_start_sdfs(node_list):
+    for node in node_list:
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        address = (node, START_PORT)
+        sock.connect(address)
+        
+        try:
+            message = "START_SDFS"  # TODO == determine the message format
+            sock.sendall(message)
+
+            while True:
+                data = sock.recv(4096)
+                if not data:
+                    logging.warning("Blank message received")
+                else:
+                    logging.info("Ack received")
+                    break
+        finally:
+            sock.close()
+
+
+# TODO == move this stuff to master_node.py?
+def master_thread():
+    slaves_dict = failure_detector.mem_list.get_alive_nodes_not_me()
+    slaves_list = []
+    for node, value in slaves_dict:
+        slaves_list.append(node)
+    # MasterNode(nodes=slaves_list, node_ip=socket.gethostname())
+    send_start_sdfs(slaves_list)
+    # TODO == begin master threads
+
+
+# TODO == move this stuff to slave_node.py?
+def wait_for_sdfs_start_thread():
+    global sdfs_init
+    address = (socket.gethostname(), START_PORT)
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+        sock.bind(address)
+        logging.info("Waiting for message to start sdfs...")
+        try:
+            while not sdfs_init:
+                sock.listen()
+                connection, address = sock.accept()
+                with connection:
+                    try:
+                        data = connection.recv(4096)
+                    except ConnectionResetError:
+                        logging.error("Client connection error")
+                    logging.info("Received request from "+address+": {0}".format(data))
+                    if not data:
+                        logging.warning("No data received, not starting sdfs...")
+
+                    # TODO == instantiate slave and begin threads
+                    # Note: the 'address' of the sender will be the master
+                    logging.info("Begin slave node setup...")
+                    ack = "Received"
+                    connection.sendall(ack)
+                    sdfs_init = True
+        finally:
+            connection.close()
+
+
 def handle_sdfs_input(cmd, arguments):
     global sdfs_init
     ret_msg = "Invalid Command"
@@ -30,6 +96,7 @@ def handle_sdfs_input(cmd, arguments):
         else:
             sdfs_init = True
             # start master node on this machine
+            master_t = threading.Thread(target=master_thread, args=())
             # send message to all machines to start as slave
             # TODO == fd adds members using socket.gethostname by default, which is the fa20-...
             logging.info("SDFS started!")
@@ -99,7 +166,10 @@ if __name__ == '__main__':
         member_args = ["--introducer-host", args.host, "--introducer-port", args.port]
         failure_detector.start_fd(member_args)
 
-    # begin thread to listen for commands
+    # begin thread to listen for starting sdfs
+    start_sdfs_t = threading.Thread(target=wait_for_sdfs_start_thread)
+
+    # begin listening for commands
     cmd_thread()
 
 
