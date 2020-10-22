@@ -59,11 +59,11 @@ if __name__ == '__main__':
     args = parse_args()
     if args.start is True:
         # start the introducer
-        introducer_args = ["--introducer", '--host', '172.22.156.162', '--port', '12345']
+        introducer_args = ["--introducer"]
         failure_detector.start_fd(introducer_args)
     else:
         # start the node as a member
-        member_args = ["--host", args.host, "--port", args.port]
+        member_args = ["--introducer-host", args.host, "--introducer-port", args.port]
         failure_detector.start_fd(member_args)
 
     # begin thread to listen for commands
