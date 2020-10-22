@@ -247,9 +247,9 @@ def handle_user_input(cmd_type):
         if in_group:
             logging.warn("Already in group...")
         else:
-            self_id = generate_id(args.host, args.port)
+            self_id = generate_id(parsed_args.host, parsed_args.port)
             logging.info(
-                f"Joining group at {args.introducer_host}:{args.introducer_port}"
+                f"Joining group at {parsed_args.introducer_host}:{parsed_args.introducer_port}"
             )
             protocol.join_group(
                 mem_list,
@@ -257,7 +257,7 @@ def handle_user_input(cmd_type):
                 parsed_args.introducer_host,
                 parsed_args.introducer_port,
                 parsed_args.host,
-                parsed_args.port,
+                gs.port,
             )
             in_group = True
     elif command == 'id':
