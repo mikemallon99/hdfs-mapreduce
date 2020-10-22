@@ -30,6 +30,11 @@ def handle_sdfs_input(user_input):
     else:
         cmd = split_arg[0]
         arg = split_arg[1]
+
+    print(user_input)
+    print(split_arg)
+    print(cmd)
+    print(arg)
     if cmd == CommandType.START_SDFS:
         if sdfs_init:
             logging.warning("SDFS already started, ignoring command...")
