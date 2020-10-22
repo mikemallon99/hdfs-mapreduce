@@ -25,6 +25,7 @@ def handle_sdfs_input(command, arguments):
     ret_msg = "Invalid Command"
 
     if command == CommandType.START_SDFS:
+        print("Here")
         if sdfs_init:
             logging.warning("SDFS already started!")
         else:
@@ -65,9 +66,12 @@ def cmd_thread():
         print(optional_args)
         # TODO == do something with the return messages or not?
         if cmd in fd_cmds:
+            if optional_args is not []:
+                logging.warning("Extra arguments for command: "+cmd)
             failure_detector.handle_user_input(cmd)
         elif cmd in dfs_cmds:
             handle_sdfs_input(cmd, optional_args)
+
 
 def parse_args():
     """
