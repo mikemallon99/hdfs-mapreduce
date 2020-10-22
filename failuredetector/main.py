@@ -257,7 +257,7 @@ def handle_user_input(cmd_type):
                 parsed_args.introducer_host,
                 parsed_args.introducer_port,
                 parsed_args.host,
-                gs.port,
+                parsed_args.port,
             )
             in_group = True
     elif command == 'id':
