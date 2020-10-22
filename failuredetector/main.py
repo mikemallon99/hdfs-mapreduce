@@ -20,6 +20,7 @@ protocol = None
 mem_list = MembershipList()
 self_id = None
 in_group = False
+parsed_args = None
 
 
 def listen_thread(server_ip, port, is_introducer):
@@ -32,6 +33,7 @@ def listen_thread(server_ip, port, is_introducer):
 
     while True:
         data, address = sock.recvfrom(4096)
+        logging.info(f"Message from {address}")
         request_json = parse_and_validate_message(data)
         if request_json is None:
             # The data received is not valid
@@ -241,6 +243,23 @@ def handle_user_input(cmd_type):
     elif command == 'list':
         logging.info(mem_list)
         ret_msg = mem_list
+    elif command == 'join':
+        if in_group:
+            logging.warn("Already in group...")
+        else:
+            self_id = generate_id(args.host, args.port)
+            logging.info(
+                f"Joining group at {args.introducer_host}:{args.introducer_port}"
+            )
+            protocol.join_group(
+                mem_list,
+                self_id,
+                parsed_args.introducer_host,
+                parsed_args.introducer_port,
+                parsed_args.host,
+                parsed_args.port,
+            )
+            in_group = True
     elif command == 'id':
         logging.info(self_id)
         ret_msg = self_id
@@ -261,7 +280,7 @@ def handle_user_input(cmd_type):
 
 
 def start_fd(args):
-    global protocol, in_group, self_id, mem_list
+    global protocol, in_group, self_id, mem_list, parsed_args
     parsed_args = parse_args(args)
     print(parsed_args)
 
