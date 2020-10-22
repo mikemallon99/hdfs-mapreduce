@@ -20,10 +20,10 @@ class CommandType(Enum):
     DISP_MASTER = "master"
 
 
-def handle_sdfs_input(command, arguments):
+def handle_sdfs_input(cmd, arguments):
     global sdfs_init
     ret_msg = "Invalid Command"
-
+    command = CommandType(cmd)
     if command == CommandType.START_SDFS:
         print("Here")
         if sdfs_init:
