@@ -180,12 +180,12 @@ def parse_args(args):
     parser.add_argument("--port", default=3256, help="Port number to host service on.")
     parser.add_argument(
         "--failure-detection-time",
-        default=5,
+        default=15,
         help="When failure happens, within this time at least one machine detects it.",
     )
     parser.add_argument(
         "--dissemination-time",
-        default=6,
+        default=10,
         help="When failure/join/leave happens, every node should update their membership list within this time.",
     )
 
