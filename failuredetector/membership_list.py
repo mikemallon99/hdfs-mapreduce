@@ -66,6 +66,7 @@ class MembershipList:
             if id in self.nodes:
                 raise Exception(f"{id} already in Membership List!")
             self.nodes[id] = Row(host, port)
+            print(self.nodes)
         if get_hostname() in id:
             log_to_file(f"Node (me) {id} joined the group.")
         else:
