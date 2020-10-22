@@ -23,7 +23,8 @@ class CommandType(Enum):
 def handle_sdfs_input(user_input):
     global sdfs_init
     ret_msg = "Invalid Command"
-    cmd, arg = None
+    cmd = None
+    arg = None
     split_arg = user_input.split()
     if len(split_arg) == 1:
         cmd = split_arg[0]
