@@ -1,9 +1,10 @@
 import argparse
 import socket
 from enum import Enum
-import sdfs_client
 from failuredetector import main as failure_detector
+import logging
 
+sdfs_init = False
 
 fd_cmds = ["join", "list", "id", "leave", "fail"]
 dfs_cmds = ["start_sdfs", "master"]  # TODO == add more of these
@@ -19,6 +20,23 @@ class CommandType(Enum):
     DISP_MASTER = "master"
 
 
+def handle_sdfs_input(user_input):
+    global sdfs_init
+    ret_msg = "Invalid Command"
+    cmd, arg = user_input.split()
+    if cmd == CommandType.START_SDFS:
+        if sdfs_init:
+            logging.warning("SDFS already started, ignoring command...")
+        else:
+            sdfs_init = True
+            # start master node on this machine
+            # send message to all machines to start as slave
+            # TODO == fd adds members using socket.gethostname by default, change this?
+            print(socket.gethostname())
+
+
+
+
 def cmd_thread():
     """
     listens for user input and executes corresponding command
@@ -31,7 +49,7 @@ def cmd_thread():
         if u_input in fd_cmds:
             cmd_ret = failure_detector.handle_user_input(u_input)
         elif u_input in dfs_cmds:
-            cmd_ret = sdfs_client.handle_user_input(u_input)
+            cmd_ret = handle_sdfs_input(u_input)
         # print(cmd_ret)
 
 
@@ -56,6 +74,7 @@ def parse_args():
 
 
 if __name__ == '__main__':
+    logging.basicConfig(level=logging.DEBUG)
     args = parse_args()
     if args.start is True:
         # start the introducer
