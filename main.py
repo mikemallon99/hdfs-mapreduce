@@ -59,7 +59,7 @@ def cmd_thread():
         cmd_ret = None
         if u_input in fd_cmds:
             cmd_ret = failure_detector.handle_user_input(u_input)
-        elif u_input is not None:
+        elif u_input is not "":
             cmd_ret = handle_sdfs_input(u_input)
         # print(cmd_ret)
 
