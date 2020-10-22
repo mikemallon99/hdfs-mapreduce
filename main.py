@@ -28,14 +28,16 @@ def handle_sdfs_input(command, arguments):
     print(arguments)
     if command == CommandType.START_SDFS:
         if sdfs_init:
-            logging.warning("SDFS already started, ignoring command...")
+            logging.warning("SDFS already started!")
+            ret_msg = "Ignoring command to start sdfs"
         else:
             sdfs_init = True
             # start master node on this machine
             # send message to all machines to start as slave
             # TODO == fd adds members using socket.gethostname by default, change this?
             print(socket.gethostname())
-    return None
+            ret_msg = "SDFS started!"
+    return ret_msg
 
 
 def cmd_thread():
@@ -64,7 +66,7 @@ def cmd_thread():
             cmd_ret = failure_detector.handle_user_input(cmd)
         elif cmd in dfs_cmds:
             cmd_ret = handle_sdfs_input(cmd, optional_args)
-        # print(cmd_ret)
+        logging.info(cmd_ret)
 
 
 def parse_args():
