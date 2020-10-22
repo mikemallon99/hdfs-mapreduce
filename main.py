@@ -45,7 +45,7 @@ def cmd_thread():
     print("Text interface with HDFS system: ")
     host_ip = socket.gethostname()
     while True:
-        u_input = input(f"<{host_ip.split('.')[0]} />")
+        u_input = input(f"<{host_ip.split('.')[0]} /> ")
 
         # check if input empty
         if u_input is not "":
@@ -65,11 +65,12 @@ def cmd_thread():
         print(cmd)
         print(optional_args)
         if cmd in fd_cmds:
+            print("Here")
             cmd_ret = failure_detector.handle_user_input(cmd)
         elif cmd in dfs_cmds:
+            print("Here!")
             cmd_ret = handle_sdfs_input(cmd, optional_args)
         logging.info(cmd_ret)
-
 
 def parse_args():
     """
