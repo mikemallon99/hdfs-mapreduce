@@ -23,7 +23,13 @@ class CommandType(Enum):
 def handle_sdfs_input(user_input):
     global sdfs_init
     ret_msg = "Invalid Command"
-    cmd, arg = user_input.split()
+    cmd, arg = None
+    split_arg = user_input.split()
+    if len(split_arg) == 1:
+        cmd = split_arg[0]
+    else:
+        cmd = split_arg[0]
+        arg = split_arg[1]
     if cmd == CommandType.START_SDFS:
         if sdfs_init:
             logging.warning("SDFS already started, ignoring command...")
