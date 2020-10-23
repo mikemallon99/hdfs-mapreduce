@@ -93,7 +93,7 @@ class MasterNode:
             data, address = sock.recvfrom(4096)
             request_json = parse_and_validate_message(data)
 
-            if request_json['ack'] == True:
+            if request_json['op'] == 'ack':
                 self.decrement_ack(data['sender_host'])
 
     def decrement_ack(self, node):
@@ -201,7 +201,9 @@ class MasterNode:
 
         # Inform the file node of the nodes requesting the file
         logging.info(f"Sending read request to {file_node}")
-        message_data = json.dumps(request).encode()
+        response = dict.copy(request)
+        response['sender_host'] = self.node_ip
+        message_data = json.dumps(response).encode()
         sock.sendto(message_data, (file_node, QHANDLER_PORT))
 
         # Wait for the acknowledgement message
