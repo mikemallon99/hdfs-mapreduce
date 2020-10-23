@@ -24,6 +24,16 @@ class MasterNode:
             self.nodetable[node] = []
             self.acktable[node] = 0
 
+    def start_master(self):
+        queue_manager = threading.Thread(target=self.queue_manager_thread)
+        queue_handler = threading.Thread(target=self.queue_handler_thread)
+        listener = threading.Thread(target=self.listener_thread)
+
+        # Start all threads
+        queue_manager.start()
+        queue_handler.start()
+        listener.start()
+
     def enqueue_read(self, request):
         """
         Safely enqueue a read operation. Attempt to combine reads of the same file
@@ -72,13 +82,19 @@ class MasterNode:
                 self.enqueue_write(request_json)
 
     def listener_thread(self):
-        with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as sock:
-            while True:
-                data, address = sock.recvfrom(4096)
-                request_json = parse_and_validate_message(data)
+        """
+        Listen for messages being sent to the queue handler
+        """
+        sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        sock.bind((self.node_ip, QHANDLER_PORT))
 
-                if request_json['ack'] == True:
-                    self.decrement_ack(address)
+        while True:
+            data, address = sock.recvfrom(4096)
+            request_json = parse_and_validate_message(data)
+
+            if request_json['ack'] == True:
+                self.decrement_ack(address)
 
     def decrement_ack(self, node):
         """
@@ -107,7 +123,12 @@ class MasterNode:
                 self.queue_lock.release()
 
                 # Handle the request
-                #self.queue_handler(request, sock)
+                if request['op'] == 'read':
+                    logging.info(f"Handling read request from {request['addr']}")
+                    self.handle_read(request, sock)
+                elif request['op'] == 'write':
+                    logging.info(f"Handling write request from {request['addr']}")
+                    self.handle_write(request, sock)
 
     def handle_write(self, request, sock):
         """
@@ -140,7 +161,7 @@ class MasterNode:
         response['addr'] = file_nodes
         logging.info(f"Sending write nodes to {request_nodes}")
         message_data = json.dumps(response).encode()
-        sock.sendto(message_data, request_nodes[0])
+        sock.sendto(message_data, (request_nodes[0], QHANDLER_PORT))
 
         # Wait for the acknowledgement message
         valid = False
@@ -168,6 +189,8 @@ class MasterNode:
                 file_node = filetable_entry[0]
         if file_node is None:
             # Inform machines that the file does not exist
+            # TODO: Implement this
+            pass
 
         # Increment ack table for requesting nodes
         for node in request_nodes:
@@ -178,7 +201,7 @@ class MasterNode:
         # Inform the file node of the nodes requesting the file
         logging.info(f"Sending read request to {file_node}")
         message_data = json.dumps(request).encode()
-        sock.sendto(message_data, file_node)
+        sock.sendto(message_data, (file_node, QHANDLER_PORT))
 
         # Wait for the acknowledgement message
         valid = False
