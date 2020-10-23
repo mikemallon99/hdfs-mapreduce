@@ -4,7 +4,7 @@ from enum import Enum
 from failuredetector import main as failure_detector
 import logging
 import threading
-from hdfs.master_node import MasterNode
+# from hdfs.master_node import MasterNode
 
 sdfs_init = False
 
@@ -13,6 +13,8 @@ dfs_cmds = ["start_sdfs", "master"]  # TODO == add more of these
 
 START_PORT = 12344
 
+# TODO == Need to ensure that when a node joins the network, and sdfs is on, it will join as slave
+# TODO == Need to ensure that when a node leaves the newtwork, and sdfs is on, it will stop its sdfs
 
 class CommandType(Enum):
     LIST = "list"
@@ -29,7 +31,7 @@ def send_start_sdfs(node_list):
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         address = (node, START_PORT)
         sock.connect(address)
-        
+
         try:
             message = "START_SDFS"  # TODO == determine the message format
             sock.sendall(message)
@@ -97,7 +99,6 @@ def handle_sdfs_input(cmd, arguments):
             sdfs_init = True
             # start master node on this machine
             master_t = threading.Thread(target=master_thread, args=())
-            # send message to all machines to start as slave
             # TODO == fd adds members using socket.gethostname by default, which is the fa20-...
             logging.info("SDFS started!")
     return ret_msg
