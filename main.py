@@ -41,8 +41,7 @@ def send_start_sdfs(node_list):
                 if not data:
                     logging.warning("Blank message received")
                 else:
-                    print(data.decode("UTF-8"))
-                    logging.info("Ack received")
+                    logging.info("Ack received: "+data.decode("UTF-8"))
                     break
         finally:
             sock.close()
@@ -83,7 +82,7 @@ def wait_for_sdfs_start_thread():
                     # Note: the 'address' of the sender will be the master
                     logging.info("Begin slave node setup...")
                     ack = "Received"
-                    connection.sendall(ack)
+                    connection.sendall(ack.encode("UTF-8"))
                     sdfs_init = True
         finally:
             connection.close()
@@ -100,6 +99,7 @@ def handle_sdfs_input(cmd, arguments):
             sdfs_init = True
             # start master node on this machine
             master_t = threading.Thread(target=master_thread, args=())
+            master_t.start()
             # TODO == fd adds members using socket.gethostname by default, which is the fa20-...
             logging.info("SDFS started!")
     return ret_msg
@@ -171,6 +171,7 @@ if __name__ == '__main__':
 
     # begin thread to listen for starting sdfs
     start_sdfs_t = threading.Thread(target=wait_for_sdfs_start_thread)
+    start_sdfs_t.start()
 
     # begin listening for commands
     cmd_thread()
