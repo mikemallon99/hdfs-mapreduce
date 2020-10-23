@@ -113,4 +113,5 @@ class NodeManager:
                         break
             finally:
                 logging.debug("All start messages sent, socket closed")
+                self.sdfs_init = True
                 sock.close()
