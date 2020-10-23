@@ -7,7 +7,9 @@ import json
 import threading
 
 fd_cmds = ["join", "list", "id", "leave", "fail"]
-dfs_cmds = ["start_sdfs", "master"]  # TODO == add more of these
+dfs_cmds = ["start_sdfs", "master", "put", "get", "delete"]  # TODO == add more of these
+
+# TODO == need to input nodes as just the hostname, not the hostname+time+port
 
 START_PORT = 12344
 
@@ -39,6 +41,13 @@ class NodeManager:
             requested_thread = threading.Thread(target=self.wait_for_sdfs_start)
             requested_thread.start()
 
+    def stop_threads(self):
+        if self.master_manager is not None:
+            self.master_manager.stop_master()
+        if self.slave_manager is not None:
+            self.slave_manager.stop_slave()
+        logging.info("Stopping all processes from KeyboardInterrupt")
+
     def process_input(self, command, arguments):
         if command in fd_cmds:
             if not arguments == []:
@@ -65,7 +74,8 @@ class NodeManager:
                 print("Found file "+arguments[0]+" in "+str(len(node_list))+" nodes:")
                 for node in node_list:
                     print(str(node))
-
+            if command == "put":
+                self.slave_manager.send_write_request(filename=arguments[0])
         else:
             logging.warning("Unknown command entered\n")
 
@@ -79,6 +89,7 @@ class NodeManager:
     def wait_for_sdfs_start(self):
         address = (socket.gethostname(), START_PORT)
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+            sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
             sock.bind(address)
             logging.info("\nWaiting for message to start sdfs...")
             try:
@@ -116,7 +127,12 @@ class NodeManager:
         node_dict = self.mem_list.get_alive_nodes_not_me(my_id=self.fd_manager.get_id())
         # Start master node
         self.is_slave = False
-        self.master_manager = MasterNode(node_dict, socket.gethostname())
+        nodes = []
+        for node in node_dict.keys():
+            nodes.append(node.split(":")[0])
+
+        self.master_manager = MasterNode(nodes, socket.gethostname())
+        self.master_manager.start_master()
         for node in node_dict:
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             address = (node.split(":")[0], START_PORT)
@@ -136,7 +152,7 @@ class NodeManager:
                 logging.debug("All start messages sent, socket closed")
                 self.sdfs_init = True
                 sock.close()
-                return True
+            return True
 
     def node_failure_callback(self, node_id, left=False):
         logging.debug("Node manager callback function!")

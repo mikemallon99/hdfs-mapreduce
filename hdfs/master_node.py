@@ -40,10 +40,12 @@ class MasterNode:
         queue_handler.start()
         listener.start()
 
+        logging.info(f"Starting master thread: {self.node_ip}")
+
     def stop_master(self):
         self.qman_sock.close()
-        self.qhan_sock.close()
         self.list_sock.close()
+        self.qhan_sock.close()
 
         logging.info("Stopping master sockets")
 
@@ -70,6 +72,7 @@ class MasterNode:
         self.queue_lock.acquire()
         add_flag = True
         # Check if the file is already being requested
+        # TODO: Stop once theres a write of the same file in the queue
         for i in range(0, len(self.op_queue)):
             entry = self.op_queue[i]
             if entry['filename'] == request['filename'] and entry['op'] == 'read':
@@ -116,15 +119,21 @@ class MasterNode:
             request_json = parse_and_validate_message(data)
             if request_json is None:
                 # The data received is not valid
+                logging.info(f"Recieved a request")
                 continue
 
             # Enqueue the data
             if request_json['op'] == 'read':
                 self.enqueue_read(request_json)
+                logging.info(f"Recieved read request from {request_json['sender_host']}")
             elif request_json['op'] == 'write':
                 self.enqueue_write(request_json)
+                logging.info(f"Recieved write request from {request_json['sender_host']}")
             elif request_json['op'] == 'ls':
                 self.enqueue_ls(request_json)
+                logging.info(f"Recieved ls request from {request_json['sender_host']}")
+            else:
+                logging.info(f"Recieved a request from {request_json['sender_host']}")
 
     def listener_thread(self):
         """
@@ -155,10 +164,6 @@ class MasterNode:
         Continuously completes tasks inputted into the operation queue
         Does not attempt the next task until the last task is totally finished
         """
-        self.qhan_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        self.qhan_sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        self.qhan_sock.bind((self.node_ip, QMANAGER_PORT))
-
         while True:
             # Check for an update in the queue
             queue_update = False
@@ -173,13 +178,13 @@ class MasterNode:
             if queue_update:
                 # Handle the request
                 if request['op'] == 'read':
-                    logging.info(f"Handling read request from {request['addr']}")
-                    self.handle_read(request, self.qhan_sock)
+                    logging.info(f"Handling read request from {request['sender_host']}")
+                    self.handle_read(request, self.list_sock)
                 elif request['op'] == 'write':
-                    logging.info(f"Handling write request from {request['addr']}")
+                    logging.info(f"Handling write request from {request['sender_host']}")
                     self.handle_write(request, self.qhan_sock)
                 elif request['op'] == 'ls':
-                    logging.info(f"Handling ls request from {request['addr']}")
+                    logging.info(f"Handling ls request from {request['sender_host']}")
                     self.handle_ls(request)
 
     def handle_write(self, request, sock):
@@ -195,18 +200,34 @@ class MasterNode:
         file_nodes = []
 
         # First, check if the file is in the network
+        sortednodetable = sorted(self.nodetable, key=lambda key: len(self.nodetable[key]))
         if filename in self.filetable.keys():
             file_nodes = self.filetable.get(filename)
+            # Then, see if there are 4 replicas
+            while len(file_nodes) < 4 and len(file_nodes) < len(self.nodetable.keys()) - len(request_nodes):
+                # Find the node with the most space that doesnt have the file
+                for node in sortednodetable:
+                    if filename not in self.nodetable[node] and node not in request_nodes:
+                        # Add file to tables
+                        file_nodes.append(node)
+                        self.filetable[filename].append(node)
+                        self.nodetable[node].append(filename)
+                        break
         # Otherwise find nodes with free space
         else:
-            sortednodetable = sorted(self.nodetable, key=lambda key: len(self.nodetable[key]))
-            file_nodes = sortednodetable[:4]
+            #file_nodes = sortednodetable[:5]
             # Add file to filetable
             self.filetable[filename] = []
             # Fix node and file tables
-            for node in file_nodes:
-                self.nodetable[node].append(filename)
-                self.filetable[filename].append(node)
+            counter = 0
+            for node in sortednodetable:
+                if node not in request_nodes:
+                    file_nodes.append(node)
+                    self.nodetable[node].append(filename)
+                    self.filetable[filename].append(node)
+                    counter += 1
+                if counter >= 4:
+                    break
 
         # Add each write node to the ack table
         for node in file_nodes:
@@ -217,7 +238,7 @@ class MasterNode:
         # Direct the requester to each node
         response = dict.copy(request)
         response['addr'] = file_nodes
-        logging.info(f"Sending write nodes to {request_nodes}")
+        logging.info(f"Sending Nodes:{file_nodes} to {request_nodes}")
         message_data = json.dumps(response).encode()
         sock.sendto(message_data, (request_nodes[0], QHANDLER_PORT))
 
@@ -225,6 +246,8 @@ class MasterNode:
         valid = False
         while not valid:
             valid = self.validate_acks(request_nodes)
+
+        # TODO: Send out node/file tables somewhere
 
         logging.info("All ACKs recieved, write successful")
 

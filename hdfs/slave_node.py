@@ -76,7 +76,7 @@ class SlaveNode():
 
         message_data = json.dumps(request).encode()
         self.qman_socket.sendto(message_data, (self.master_host, QMANAGER_PORT))
-        logging.info("Write successfully queued")
+        logging.info(f"Write to {self.master_host} queued")
 
     def handle_write_request(self, request):
         """
@@ -87,16 +87,19 @@ class SlaveNode():
         filesize = os.path.getsize("hdfs_files/" + filename)
 
         for target_node in target_nodes:
-            c = self.tcp_socket.connect((target_node, TCP_PORT))
+            tcp_socket_send = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            tcp_socket_send.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+            logging.info(f"Attempting to connect to:{target_node}")
+            tcp_socket_send.connect((target_node, TCP_PORT))
             # Transfer the file to the request machine
-            c.send(f"{filename}|{filesize}")
+            tcp_socket_send.send(f"{filename}|{filesize}|".ljust(4096).encode())
             with open("hdfs_files/"+filename, "rb") as f:
                 while True:
                     bytes_read = f.read(4096)
                     if not bytes_read:
                         break
-                    c.sendall(bytes_read)
-            c.close()
+                    tcp_socket_send.sendall(bytes_read)
+            tcp_socket_send.close()
 
         logging.info(f"Successfully wrote file: {filename} to nodes: {target_nodes}")
 
@@ -112,7 +115,7 @@ class SlaveNode():
 
         message_data = json.dumps(request).encode()
         self.qman_socket.sendto(message_data, (self.master_host, QMANAGER_PORT))
-        logging.info("Read successfully queued")
+        logging.info(f"Read to {self.master_host} queued")
 
     def handle_read_request(self, request):
         """
@@ -122,17 +125,20 @@ class SlaveNode():
         filename = request['filename']
         filesize = os.path.getsize("hdfs_files/"+filename)
 
+
         for request_node in request_nodes:
-            c = self.tcp_socket.connect((request_node, TCP_PORT))
-            c.send(f"{filename}|{filesize}")
+            tcp_socket_send = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            tcp_socket_send.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+            tcp_socket_send.connect((request_node, TCP_PORT))
+            tcp_socket_send.send(f"{filename}|{filesize}".encode())
             # Transfer the file to the request machine
             with open("hdfs_files/"+filename, "rb") as f:
                 while True:
                     bytes_read = f.read(4096)
                     if not bytes_read:
                         break
-                    c.sendall(bytes_read)
-            c.close()
+                    tcp_socket_send.sendall(bytes_read)
+            tcp_socket_send.close()
 
         logging.info(f"Successfully sent file: {filename} to node: {request_nodes}")
 
@@ -143,7 +149,7 @@ class SlaveNode():
         """
         # Get file information
         received = c.recv(4096).decode()
-        filename, filesize = received.split("|")
+        filename, filesize, file_content = received.split("|")
         filename = os.path.basename(filename)
         filesize = int(filesize)
 
@@ -183,6 +189,7 @@ class SlaveNode():
 
         while True:
             c, addr = self.tcp_socket.accept()
+            logging.info(f"Recieved TCP connection from {addr}")
             # Handle recieiving files here
             file_transfer_thread = threading.Thread(target=self.handle_file_transfer, args=(c,))
             file_transfer_thread.start()
