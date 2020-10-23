@@ -51,10 +51,12 @@ def send_start_sdfs(node_list):
 def master_thread():
     slaves_dict = failure_detector.mem_list.get_alive_nodes_not_me(socket.gethostname())
     slaves_list = []
-    for node, value in slaves_dict:
+    print(slaves_dict)
+    for node in slaves_dict:
         slaves_list.append(node)
     # MasterNode(nodes=slaves_list, node_ip=socket.gethostname())
-    send_start_sdfs(slaves_list)
+    # send_start_sdfs(slaves_list)
+    print(slaves_list)
     # TODO == begin master threads
 
 
@@ -130,7 +132,7 @@ def cmd_thread():
         cmd_ret = None
         # TODO == do something with the return messages or not?
         if cmd in fd_cmds:
-            if optional_args is not []:
+            if not optional_args == []:
                 logging.warning("Extra arguments for command: "+cmd)
             failure_detector.handle_user_input(cmd)
         elif cmd in dfs_cmds:
