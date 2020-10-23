@@ -129,7 +129,7 @@ class SlaveNode():
         # Retrieve file
         with open("hdfs_files/"+filename, "wb") as f:
             while True:
-                bytes_read = f.read(4096)
+                bytes_read = c.recv(4096)
                 if not bytes_read:
                     break
                 f.write(bytes_read)
