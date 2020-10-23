@@ -51,6 +51,7 @@ def send_start_sdfs(node_list):
 def master_thread():
     slaves_dict = failure_detector.mem_list.get_alive_nodes_not_me(my_id=failure_detector.get_id())
     slaves_list = []
+    print(slaves_list)
     for node in slaves_dict:
         slaves_list.append(node)
     # MasterNode(nodes=slaves_list, node_ip=socket.gethostname())
@@ -128,7 +129,6 @@ def cmd_thread():
         if len(split_args) > 1:
             optional_args = split_args[1:]
 
-        print(optional_args)
         cmd_ret = None
         # TODO == do something with the return messages or not?
         if cmd in fd_cmds:
