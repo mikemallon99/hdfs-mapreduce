@@ -19,6 +19,8 @@ class SlaveNode():
         self.tcp_socket = None
         self.udp_socket = None
         self.qman_socket = None
+        self.new_ls = False
+        self.ls_files = []
 
     def start_slave(self):
         tcp_thread = threading.Thread(target=self.listener_thread_TCP)
@@ -45,24 +47,7 @@ class SlaveNode():
         request = {'op': 'ls', 'sender_host': self.self_host, 'filename': filename}
         message_data = json.dumps(request).encode()
         self.qman_socket.sendto(message_data, (self.master_host, QMANAGER_PORT))
-        logging.info("ls successfully queued")
-
-        # TODO == make this its own thread, start listening for response before req sent?
-        ls_recvd = False
-        data = None
-        recvd_list = []
-        try:
-            data, sender_adr = ls_sock.recvfrom(4096)
-        except KeyboardInterrupt:
-            logging.error('Keyboard interrupt, close socket...')
-            if ls_sock:
-                ls_sock.close()
-        ls_sock.close()
-        if not data:
-            logging.error("No data received from ls")
-        else:
-            recvd_list = json.loads(data.decode("UTF-8"))
-        return recvd_list
+        logging.debug("ls successfully queued")
 
     def send_write_request(self, filename):
         """
@@ -212,3 +197,10 @@ class SlaveNode():
             elif request_json['op'] == 'write':
                 write_thread = threading.Thread(target=self.handle_write_request, args=(request_json,))
                 write_thread.start()
+            elif request_json['op'] == 'disp_ls':
+                file_list = request_json['filelist']
+                if not file_list:
+                    logging.info("File not found in SDFS!")
+                logging.info("Found the file "+request_json['filename']+" at nodes:")
+                for file in file_list:
+                    logging.info(file)

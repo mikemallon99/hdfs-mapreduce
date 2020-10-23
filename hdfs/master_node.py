@@ -296,8 +296,11 @@ class MasterNode:
         ls_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         filename = request['filename']
         file_list = self.retrieve_file_nodes(filename)
-
-        bytes_sent = ls_sock.sendto(json.dumps(file_list), (request['sender_host'], LS_PORT))
+        message = {}
+        message['op'] = 'disp_ls'
+        message['filelist'] = file_list
+        message['filename'] = filename
+        bytes_sent = ls_sock.sendto(json.dumps(message).encode(), (request['sender_host'], QHANDLER_PORT))
         if not bytes_sent == len(json.dumps(file_list)):
             logging.error("LS message not sent!")
 
