@@ -149,7 +149,7 @@ class SlaveNode():
 
         # Send acknowledgement
         message_data = json.dumps(request).encode()
-        self.udp_socket.send(message_data, (self.master_host, QHANDLER_PORT))
+        self.udp_socket.sendto(message_data, (self.master_host, QHANDLER_PORT))
 
     def listener_thread_TCP(self):
         """
