@@ -13,13 +13,16 @@ class MasterNode:
     def __init__(self, nodes, node_ip):
         self.nodetable = {}
         self.filetable = {}
+        self.acktable = {}
         self.op_queue = []
         self.queue_lock = threading.Lock()
+        self.ack_lock = threading.Lock()
         self.node_ip = node_ip
 
         # Populate the node table with each slave
         for node in nodes:
             self.nodetable[node] = []
+            self.acktable[node] = 0
 
     def enqueue_read(self, request):
         """
@@ -68,6 +71,24 @@ class MasterNode:
             elif request_json['op'] == 'write':
                 self.enqueue_write(request_json)
 
+    def listener_thread(self):
+        with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as sock:
+            while True:
+                data, address = sock.recvfrom(4096)
+                request_json = parse_and_validate_message(data)
+
+                if request_json['ack'] == True:
+                    self.decrement_ack(address)
+
+    def decrement_ack(self, node):
+        """
+        Use this function to decrement the acktable for a receiving node without having to wait
+        """
+        self.ack_lock.acquire()
+        if self.acktable[node] > 0:
+            self.acktable[node] -= 1
+        self.ack_lock.release()
+
     def queue_handler_thread(self):
         """
         Continuously completes tasks inputted into the operation queue
@@ -88,6 +109,47 @@ class MasterNode:
                 # Handle the request
                 #self.queue_handler(request, sock)
 
+    def handle_write(self, request, sock):
+        """
+        Handle a write operation from the queue.
+        The objective of the operation is to refer the request machine to 4 machines that can hold the file,
+        and the write operation will go to the machine. Once the file has been written, the machines
+        being written to will return with a acknowledgement.
+        """
+        # Find a machine that has space for the file
+        request_nodes = request['addr']
+        filename = request['filename']
+        file_nodes = []
+
+        # First, check if the file is in the network
+        if filename in self.filetable.keys():
+            file_nodes = self.filetable.get(filename)
+        # Otherwise find nodes with free space
+        else:
+            sortednodetable = sorted(self.nodetable, key=lambda key: len(self.nodetable[key]))
+            file_nodes = sortednodetable[:4]
+
+        # Add each write node to the ack table
+        for node in file_nodes:
+            self.ack_lock.acquire()
+            self.acktable[node] += 1
+            self.ack_lock.release()
+
+        # Direct the requester to each node
+        response = dict.copy(request)
+        response['addr'] = file_nodes
+        logging.info(f"Sending write nodes to {request_nodes}")
+        message_data = json.dumps(response).encode()
+        sock.sendto(message_data, request_nodes[0])
+
+        # Wait for the acknowledgement message
+        valid = False
+        while not valid:
+            valid = self.validate_acks(request_nodes)
+
+        logging.info("All ACKs recieved, write successful")
+
+
     def handle_read(self, request, sock):
         """
         Handle a read operation left in the queue.
@@ -107,6 +169,11 @@ class MasterNode:
         if file_node is None:
             # Inform machines that the file does not exist
 
+        # Increment ack table for requesting nodes
+        for node in request_nodes:
+            self.ack_lock.acquire()
+            self.acktable[node] += 1
+            self.ack_lock.release()
 
         # Inform the file node of the nodes requesting the file
         logging.info(f"Sending read request to {file_node}")
@@ -114,13 +181,31 @@ class MasterNode:
         sock.sendto(message_data, file_node)
 
         # Wait for the acknowledgement message
-        sock.settimeout(60)
-        try:
-            data, address = sock.recvfrom(4096)
-            request_json = parse_and_validate_message(data)
-        except socket.timeout:
-            logging.info(f"Timeout waiting for acknowledgement from {request_nodes}")
+        valid = False
+        while not valid:
+            valid = self.validate_acks(request_nodes)
 
+        logging.info("All ACKs recieved, read successful")
+
+    def validate_acks(self, nodes):
+        """
+        Check to make sure we can stop waiting for nodes.
+        Valid if a machine is failed or if all acks are recieved
+        """
+        valid = True
+        for node in nodes:
+            # Keep waiting if there are still needed acks
+            self.ack_lock.acquire()
+            node_acks = self.acktable[node]
+            self.ack_lock.release()
+            if node_acks > 0:
+                valid = False
+            if node not in self.nodetable.keys():
+                valid = True
+                logging.info(f"Node {node} not detected in node table")
+                break
+
+        return valid
 
 
 def recv_ack_thread(sock):
