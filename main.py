@@ -53,7 +53,7 @@ def master_thread():
     slaves_list = []
     print(slaves_dict)
     for node in slaves_dict:
-        slaves_list.append(node)
+        slaves_list.append(node.split(":")[0])
     # MasterNode(nodes=slaves_list, node_ip=socket.gethostname())
     print(slaves_list)
     send_start_sdfs(slaves_list)
