@@ -145,7 +145,7 @@ class NodeManager:
                 logging.debug("All start messages sent, socket closed")
                 self.sdfs_init = True
                 sock.close()
-            return True
+        return True
 
     def node_failure_callback(self, node_id, left=False):
         logging.debug("Node manager callback function!")
