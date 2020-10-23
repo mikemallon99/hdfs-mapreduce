@@ -200,6 +200,7 @@ class MasterNode:
             counter = 0
             for node in sortednodetable:
                 if node not in request_nodes:
+                    file_nodes.append(node)
                     self.nodetable[node].append(filename)
                     self.filetable[filename].append(node)
                     counter += 1
@@ -215,7 +216,7 @@ class MasterNode:
         # Direct the requester to each node
         response = dict.copy(request)
         response['addr'] = file_nodes
-        logging.info(f"Sending write nodes to {request_nodes}")
+        logging.info(f"Sending Nodes:{file_nodes} to {request_nodes}")
         message_data = json.dumps(response).encode()
         sock.sendto(message_data, (request_nodes[0], QHANDLER_PORT))
 
