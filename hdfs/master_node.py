@@ -38,6 +38,8 @@ class MasterNode:
         queue_handler.start()
         listener.start()
 
+        logging.info("Starting master threads")
+
     def stop_master(self):
         self.qman_sock.close()
         self.qhan_sock.close()
