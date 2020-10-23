@@ -41,6 +41,7 @@ def send_start_sdfs(node_list):
                 if not data:
                     logging.warning("Blank message received")
                 else:
+                    print(data.decode("UTF-8"))
                     logging.info("Ack received")
                     break
         finally:
