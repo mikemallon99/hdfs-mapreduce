@@ -180,10 +180,10 @@ class MasterNode:
         if filename in self.filetable.keys():
             file_nodes = self.filetable.get(filename)
             # Then, see if there are 4 replicas
-            while len(file_nodes) < 4:
+            while len(file_nodes) < 4 and len(file_nodes) < len(self.nodetable.keys()) - len(request_nodes):
                 # Find the node with the most space that doesnt have the file
                 for node in sortednodetable:
-                    if filename not in self.nodetable[node]:
+                    if filename not in self.nodetable[node] and node not in request_nodes:
                         # Add file to tables
                         file_nodes.append(node)
                         self.filetable[filename].append(node)
@@ -191,13 +191,18 @@ class MasterNode:
                         break
         # Otherwise find nodes with free space
         else:
-            file_nodes = sortednodetable[:4]
+            #file_nodes = sortednodetable[:5]
             # Add file to filetable
             self.filetable[filename] = []
             # Fix node and file tables
-            for node in file_nodes:
-                self.nodetable[node].append(filename)
-                self.filetable[filename].append(node)
+            counter = 0
+            for node in sortednodetable:
+                if node not in request_nodes:
+                    self.nodetable[node].append(filename)
+                    self.filetable[filename].append(node)
+                    counter += 1
+                if counter >= 4:
+                    break
 
         # Add each write node to the ack table
         for node in file_nodes:
