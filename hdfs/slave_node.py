@@ -49,7 +49,7 @@ class SlaveNode():
 
         message_data = json.dumps(request).encode()
         self.qman_socket.sendto(message_data, (self.master_host, QMANAGER_PORT))
-        logging.info("Write successfully queued")
+        logging.info(f"Write to {self.master_host} queued")
 
     def handle_write_request(self, request):
         """
@@ -85,7 +85,7 @@ class SlaveNode():
 
         message_data = json.dumps(request).encode()
         self.qman_socket.sendto(message_data, (self.master_host, QMANAGER_PORT))
-        logging.info("Read successfully queued")
+        logging.info(f"Read to {self.master_host} queued")
 
     def handle_read_request(self, request):
         """

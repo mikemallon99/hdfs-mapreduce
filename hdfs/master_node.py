@@ -68,6 +68,7 @@ class MasterNode:
         self.queue_lock.acquire()
         add_flag = True
         # Check if the file is already being requested
+        # TODO: Stop once theres a write of the same file in the queue
         for i in range(0, len(self.op_queue)):
             entry = self.op_queue[i]
             if entry['filename'] == request['filename'] and entry['op'] == 'read':
@@ -109,6 +110,8 @@ class MasterNode:
             elif request_json['op'] == 'write':
                 self.enqueue_write(request_json)
                 logging.info(f"Recieved write request from {request_json['sender_host']}")
+            else:
+                logging.info(f"Recieved a request from {request_json['sender_host']}")
 
     def listener_thread(self):
         """
