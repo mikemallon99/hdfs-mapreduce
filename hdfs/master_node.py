@@ -6,12 +6,14 @@ from typing import Optional, Dict
 
 QMANAGER_PORT = 12345
 QHANDLER_PORT = 12346
+LS_PORT = 12348
 
 ack_available = threading.Event()
 
+
 class MasterNode:
     def __init__(self, nodes, node_ip):
-        self.nodetable = {}  # TODO == easier to make this a list?
+        self.nodetable = {}
         self.filetable = {}
         self.acktable = {}
         self.op_queue = []
@@ -58,10 +60,10 @@ class MasterNode:
             try:
                 self.filetable[file].remove(node)
             except ValueError:
+                logging.error("Value error")
                 continue
 
         # Add new writes to queue for file
-
 
     def enqueue_read(self, request):
         """
@@ -90,6 +92,20 @@ class MasterNode:
         self.op_queue.append(request)
         self.queue_lock.release()
 
+    def enqueue_ls(self, request):
+        """
+        safely enqueue an ls operation at the end of the queue
+        """
+        self.queue_lock.acquire()
+        self.op_queue.append(request)
+        self.queue_lock.release()
+
+    def retrieve_file_nodes(self, filename):
+        filenodes = []
+        if filename in self.filetable.keys():
+            filenodes = self.filetable[filename]
+        return filenodes
+
     def queue_manager_thread(self):
         """
         Listen for messages from group members. Update membership list accordingly.
@@ -113,6 +129,9 @@ class MasterNode:
             elif request_json['op'] == 'write':
                 self.enqueue_write(request_json)
                 logging.info(f"Recieved write request from {request_json['sender_host']}")
+            elif request_json['op'] == 'ls':
+                self.enqueue_ls(request_json)
+                logging.info(f"Recieved ls request from {request_json['sender_host']}")
             else:
                 logging.info(f"Recieved a request from {request_json['sender_host']}")
 
@@ -163,7 +182,10 @@ class MasterNode:
                     self.handle_read(request, self.list_sock)
                 elif request['op'] == 'write':
                     logging.info(f"Handling write request from {request['sender_host']}")
-                    self.handle_write(request, self.list_sock)
+                    self.handle_write(request, self.qhan_sock)
+                elif request['op'] == 'ls':
+                    logging.info(f"Handling ls request from {request['sender_host']}")
+                    self.handle_ls(request)
 
     def handle_write(self, request, sock):
         """
@@ -229,7 +251,6 @@ class MasterNode:
 
         logging.info("All ACKs recieved, write successful")
 
-
     def handle_read(self, request, sock):
         """
         Handle a read operation left in the queue.
@@ -270,6 +291,18 @@ class MasterNode:
             valid = self.validate_acks(request_nodes)
 
         logging.info("All ACKs recieved, read successful")
+
+    def handle_ls(self, request):
+        ls_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        filename = request['filename']
+        file_list = self.retrieve_file_nodes(filename)
+        message = {}
+        message['op'] = 'disp_ls'
+        message['filelist'] = file_list
+        message['filename'] = filename
+        bytes_sent = ls_sock.sendto(json.dumps(message).encode(), (request['sender_host'], QHANDLER_PORT))
+        if not bytes_sent == len(json.dumps(message)):
+            logging.error("LS message not sent!")
 
     def validate_acks(self, nodes):
         """

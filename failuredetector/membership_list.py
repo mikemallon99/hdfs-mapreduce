@@ -55,6 +55,10 @@ class MembershipList:
     def __init__(self):
         self.nodes = {}
         self.lock = threading.Lock()
+        self.failure_callback = None
+
+    def set_callback(self, func):
+        self.failure_callback = func
 
     def add_node(self, id: str, host: str, port: int):
         """
@@ -103,6 +107,7 @@ class MembershipList:
     def mark_left(self, id: str):
         with self.lock:
             self.nodes[id].status = Status.LEFT
+            self.failure_callback(id, True)
         if get_hostname() in id:
             log_to_file(f"Node (me) {id} left the group.")
         else:
@@ -111,6 +116,7 @@ class MembershipList:
     def mark_failed(self, id: str):
         with self.lock:
             self.nodes[id].status = Status.FAILED
+            self.failure_callback(id)
         log_to_file(f"Node {id} failed.")
 
     def contains_node(self, id: str) -> bool:

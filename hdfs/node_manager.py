@@ -7,7 +7,7 @@ import json
 import threading
 
 fd_cmds = ["join", "list", "id", "leave", "fail"]
-dfs_cmds = ["start_sdfs", "master", "put", "get", "delete"]  # TODO == add more of these
+dfs_cmds = ["start_sdfs", "master", "put", "get", "delete", "ls"]  # TODO == add more of these
 
 # TODO == need to input nodes as just the hostname, not the hostname+time+port
 
@@ -66,6 +66,13 @@ class NodeManager:
                 self.slave_manager.send_write_request(localfilename=arguments[0], sdfsfilename=arguments[1])
             elif command == "get":
                 self.slave_manager.send_read_request(localfilename=arguments[1], sdfsfilename=arguments[0])
+            if command == "ls":
+                if self.is_slave:
+                    self.slave_manager.send_ls_to_master(arguments[0])
+                else:
+                    self.master_manager.retrieve_file_nodes(arguments[0])
+            if command == "put":
+                self.slave_manager.send_write_request(filename=arguments[0])
         else:
             logging.warning("Unknown command entered\n")
 
@@ -74,6 +81,7 @@ class NodeManager:
             self.fd_manager.start_fd(introducer_args)
         else:
             self.fd_manager.start_fd(member_args)
+        self.mem_list.set_callback(self.node_failure_callback)
 
     def wait_for_sdfs_start(self):
         address = (socket.gethostname(), START_PORT)
@@ -98,8 +106,6 @@ class NodeManager:
                         if not message['Type'] == "START_SDFS":
                             logging.warning("Invalid message")
                         logging.debug("Message received: " + str(message))
-                        # TODO == instantiate slave and begin threads
-                        # Note: the 'address' of the sender will be the master
                         self.slave_manager = SlaveNode(message["sender_host"], socket.gethostname())
                         self.slave_manager.start_slave()
                         logging.info("Begin slave node setup...")
@@ -143,4 +149,22 @@ class NodeManager:
                 logging.debug("All start messages sent, socket closed")
                 self.sdfs_init = True
                 sock.close()
-        return True
+            return True
+
+    def node_failure_callback(self, node_id, left=False):
+        logging.debug("Node manager callback function!")
+        if left:
+            logging.debug("Node "+str(node_id)+"has left")
+        else:
+            logging.debug("Failing node: "+str(node_id))
+        if self.sdfs_init:
+            if not self.is_slave:
+                logging.debug(str(self.master_manager.nodetable))
+                self.master_manager.node_failure(node_id)
+                logging.debug(str(self.master_manager.nodetable))
+            elif node_id == self.slave_manager.master_host:
+                logging.debug("Master failed!")
+                # TODO == call slave function to elect new master
+        else:
+            logging.debug("[Node manager] SDFS not initialized, no need to handle failure")
+        return

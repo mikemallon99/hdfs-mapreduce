@@ -8,6 +8,7 @@ import os
 QMANAGER_PORT = 12345
 QHANDLER_PORT = 12346
 TCP_PORT = 12347
+LS_PORT = 12348
 
 class SlaveNode():
     def __init__(self, master_host, self_host):
@@ -18,6 +19,8 @@ class SlaveNode():
         self.tcp_socket = None
         self.udp_socket = None
         self.qman_socket = None
+        self.new_ls = False
+        self.ls_files = []
 
     def start_slave(self):
         tcp_thread = threading.Thread(target=self.listener_thread_TCP)
@@ -37,13 +40,22 @@ class SlaveNode():
         self.qman_socket.close()
         logging.info("Stopping slave sockets")
 
+    def send_ls_to_master(self, filename):
+        ls_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        ls_sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        ls_sock.bind((self.self_host, LS_PORT))
+        request = {'op': 'ls', 'sender_host': self.self_host, 'filename': filename}
+        message_data = json.dumps(request).encode()
+        self.qman_socket.sendto(message_data, (self.master_host, QMANAGER_PORT))
+        logging.debug("ls successfully queued")
+
     def send_write_request(self, localfilename, sdfsfilename):
         """
         Send a write request to the master queue manager
         """
         request = {}
         request['op'] = 'write'
-        request['sender_host'] = self.self_host
+        request['sender_host'] = self.self_host  # TODO == why need both?
         request['addr'] = [self.self_host]
         request['filename'] = sdfsfilename
         request['localfilename'] = localfilename
@@ -189,3 +201,11 @@ class SlaveNode():
             elif request_json['op'] == 'write':
                 write_thread = threading.Thread(target=self.handle_write_request, args=(request_json,))
                 write_thread.start()
+            elif request_json['op'] == 'disp_ls':
+                file_list = request_json['filelist']
+                if not file_list:
+                    logging.info("File not found in SDFS!")
+                    continue
+                logging.info("Found the file "+request_json['filename']+" at nodes:")
+                for file in file_list:
+                    logging.info(file)
