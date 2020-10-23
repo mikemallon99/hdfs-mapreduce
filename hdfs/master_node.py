@@ -38,7 +38,7 @@ class MasterNode:
         queue_handler.start()
         listener.start()
 
-        logging.info("Starting master threads")
+        logging.info(f"Starting master thread: {self.node_ip}")
 
     def stop_master(self):
         self.qman_sock.close()
@@ -103,7 +103,7 @@ class MasterNode:
             request_json = parse_and_validate_message(data)
             if request_json is None:
                 # The data received is not valid
-                logging.info(f"Recieved a request from {request_json['sender_host']}")
+                logging.info(f"Recieved a request")
                 continue
 
             # Enqueue the data
