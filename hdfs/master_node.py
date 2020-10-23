@@ -19,6 +19,10 @@ class MasterNode:
         self.ack_lock = threading.Lock()
         self.node_ip = node_ip
 
+        self.qman_sock = None
+        self.qhan_sock = None
+        self.list_sock = None
+
         # Populate the node table with each slave
         for node in nodes:
             self.nodetable[node] = []
@@ -33,6 +37,13 @@ class MasterNode:
         queue_manager.start()
         queue_handler.start()
         listener.start()
+
+    def stop_master(self):
+        self.qman_sock.close()
+        self.qhan_sock.close()
+        self.list_sock.close()
+
+        logging.info("Stopping master sockets")
 
     def enqueue_read(self, request):
         """
@@ -64,12 +75,12 @@ class MasterNode:
         """
         Listen for messages from group members. Update membership list accordingly.
         """
-        sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        sock.bind((self.node_ip, QMANAGER_PORT))
+        self.qman_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        self.qman_sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        self.qman_sock.bind((self.node_ip, QMANAGER_PORT))
 
         while True:
-            data, address = sock.recvfrom(4096)
+            data, address = self.qman_sock.recvfrom(4096)
             request_json = parse_and_validate_message(data)
             if request_json is None:
                 # The data received is not valid
@@ -85,12 +96,12 @@ class MasterNode:
         """
         Listen for messages being sent to the queue handler
         """
-        sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        sock.bind((self.node_ip, QHANDLER_PORT))
+        self.list_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        self.list_sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        self.list_sock.bind((self.node_ip, QHANDLER_PORT))
 
         while True:
-            data, address = sock.recvfrom(4096)
+            data, address = self.list_sock.recvfrom(4096)
             request_json = parse_and_validate_message(data)
 
             if request_json['op'] == 'ack':
@@ -110,26 +121,29 @@ class MasterNode:
         Continuously completes tasks inputted into the operation queue
         Does not attempt the next task until the last task is totally finished
         """
-        with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as sock:
-            while True:
-                # Check for an update in the queue
-                queue_update = False
-                request = {}
-                self.queue_lock.acquire()
-                if len(self.op_queue) > 0:
-                    queue_update = True
-                    request = self.op_queue[0]
-                    self.op_queue.pop(0)
-                self.queue_lock.release()
+        self.qhan_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        self.qhan_sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        self.qhan_sock.bind((self.node_ip, QMANAGER_PORT))
 
-                if queue_update:
-                    # Handle the request
-                    if request['op'] == 'read':
-                        logging.info(f"Handling read request from {request['addr']}")
-                        self.handle_read(request, sock)
-                    elif request['op'] == 'write':
-                        logging.info(f"Handling write request from {request['addr']}")
-                        self.handle_write(request, sock)
+        while True:
+            # Check for an update in the queue
+            queue_update = False
+            request = {}
+            self.queue_lock.acquire()
+            if len(self.op_queue) > 0:
+                queue_update = True
+                request = self.op_queue[0]
+                self.op_queue.pop(0)
+            self.queue_lock.release()
+
+            if queue_update:
+                # Handle the request
+                if request['op'] == 'read':
+                    logging.info(f"Handling read request from {request['addr']}")
+                    self.handle_read(request, self.qhan_sock)
+                elif request['op'] == 'write':
+                    logging.info(f"Handling write request from {request['addr']}")
+                    self.handle_write(request, self.qhan_sock)
 
     def handle_write(self, request, sock):
         """

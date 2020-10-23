@@ -27,6 +27,11 @@ class SlaveNode():
 
         logging.info("Started slave listeners")
 
+    def stop_slave(self):
+        self.tcp_socket.close()
+        self.udp_socket.close()
+        logging.info("Stopping slave sockets")
+
     def send_write_request(self, filename, sock):
         """
         Send a write request to the master queue manager
