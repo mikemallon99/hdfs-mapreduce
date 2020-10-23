@@ -7,7 +7,7 @@ import json
 import threading
 
 fd_cmds = ["join", "list", "id", "leave", "fail"]
-dfs_cmds = ["start_sdfs", "master", "put", "get", "delete"]  # TODO == add more of these
+dfs_cmds = ["start_sdfs", "master", "put", "get", "delete", "ls"]  # TODO == add more of these
 
 # TODO == need to input nodes as just the hostname, not the hostname+time+port
 
@@ -67,12 +67,6 @@ class NodeManager:
                     self.slave_manager.send_ls_to_master(arguments[0])
                 else:
                     self.master_manager.retrieve_file_nodes(arguments[0])
-                if not node_list:
-                    print("File not found in SDFS")
-                    return
-                print("Found file "+arguments[0]+" in "+str(len(node_list))+" nodes:")
-                for node in node_list:
-                    print(str(node))
             if command == "put":
                 self.slave_manager.send_write_request(filename=arguments[0])
         else:
