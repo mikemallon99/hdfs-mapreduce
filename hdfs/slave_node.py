@@ -67,7 +67,7 @@ class SlaveNode():
             logging.info(f"Attempting to connect to:{target_node}")
             tcp_socket_send.connect((target_node, TCP_PORT))
             # Transfer the file to the request machine
-            tcp_socket_send.send(f"{sdfsfilename}|{filesize}|".ljust(4096).encode())
+            tcp_socket_send.send(f"{sdfsfilename}|{filesize}".ljust(4096).encode())
             with open("hdfs_files/"+localfilename, "rb") as f:
                 while True:
                     bytes_read = f.read(4096)
@@ -107,7 +107,7 @@ class SlaveNode():
             tcp_socket_send = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             tcp_socket_send.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
             tcp_socket_send.connect((request_node, TCP_PORT))
-            tcp_socket_send.send(f"{localfilename}|{filesize}".encode())
+            tcp_socket_send.send(f"{localfilename}|{filesize}".ljust(4096).encode())
             # Transfer the file to the request machine
             with open("hdfs_files/"+sdfsfilename, "rb") as f:
                 while True:
