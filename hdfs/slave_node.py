@@ -1,4 +1,3 @@
-from .master_node import MasterNode
 from .master_node import parse_and_validate_message
 import json
 import logging
@@ -18,6 +17,7 @@ class SlaveNode():
         self.self_host = self_host
         self.tcp_socket = None
         self.udp_socket = None
+        self.qman_socket = None
 
     def start_slave(self):
         tcp_thread = threading.Thread(target=self.listener_thread_TCP)
@@ -25,14 +25,19 @@ class SlaveNode():
         tcp_thread.start()
         udp_thread.start()
 
+        self.qman_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        self.qman_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        self.qman_socket.bind((self.self_host, QMANAGER_PORT))
+
         logging.info("Started slave listeners")
 
     def stop_slave(self):
         self.tcp_socket.close()
         self.udp_socket.close()
+        self.qman_socket.close()
         logging.info("Stopping slave sockets")
 
-    def send_write_request(self, filename, sock):
+    def send_write_request(self, filename):
         """
         Send a write request to the master queue manager
         """
@@ -43,7 +48,7 @@ class SlaveNode():
         request['filename'] = filename
 
         message_data = json.dumps(request).encode()
-        sock.sendto(message_data, (self.master_host, QMANAGER_PORT))
+        self.qman_socket.sendto(message_data, (self.master_host, QMANAGER_PORT))
         logging.info("Write successfully queued")
 
     def handle_write_request(self, request):
@@ -68,7 +73,7 @@ class SlaveNode():
 
         logging.info(f"Successfully wrote file: {filename} to nodes: {target_nodes}")
 
-    def send_read_request(self, filename, sock):
+    def send_read_request(self, filename):
         """
         Send a read request to the master queue manager and wait for the response
         """
@@ -79,7 +84,7 @@ class SlaveNode():
         request['filename'] = filename
 
         message_data = json.dumps(request).encode()
-        sock.sendto(message_data, (self.master_host, QMANAGER_PORT))
+        self.qman_socket.sendto(message_data, (self.master_host, QMANAGER_PORT))
         logging.info("Read successfully queued")
 
     def handle_read_request(self, request):
@@ -102,7 +107,7 @@ class SlaveNode():
                     c.sendall(bytes_read)
             c.close()
 
-        logging.info(f"Successfully sent file: {filename} to node: {request_node}")
+        logging.info(f"Successfully sent file: {filename} to node: {request_nodes}")
 
     def handle_file_transfer(self, c):
         """
@@ -146,7 +151,7 @@ class SlaveNode():
         """
         self.tcp_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.tcp_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        self.tcp_socket.bind((socket.gethostname()), TCP_PORT)
+        self.tcp_socket.bind((socket.gethostname(), TCP_PORT))
         self.tcp_socket.listen(8)
 
         while True:
@@ -154,7 +159,6 @@ class SlaveNode():
             # Handle recieiving files here
             file_transfer_thread = threading.Thread(target=self.handle_file_transfer, args=(c,))
             file_transfer_thread.start()
-        self.tcp_socket.close()
 
     def listener_thread_UDP(self):
         """
@@ -162,7 +166,7 @@ class SlaveNode():
         """
         self.udp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.udp_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        self.udp_socket.bind((self.node_ip, QHANDLER_PORT))
+        self.udp_socket.bind((self.self_host, QHANDLER_PORT))
 
         while True:
             data, address = self.udp_socket.recvfrom(4096)
@@ -174,4 +178,3 @@ class SlaveNode():
             elif request_json['op'] == 'write':
                 write_thread = threading.Thread(target=self.handle_write_request, args=(request_json,))
                 write_thread.start()
-        self.udp_socket.close()
