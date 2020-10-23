@@ -45,6 +45,22 @@ class MasterNode:
 
         logging.info("Stopping master sockets")
 
+    def node_failure(self, node):
+        """
+        This is called by the node manager when it detects that a node fails in the membership list
+        This will take the node out from the node table and queue all of its files to be written
+        """
+        # Remove node from nodetable and from all filetable entries
+        node_files = self.nodetable.pop(node, [])
+        for file in node_files:
+            try:
+                self.filetable[file].remove(node)
+            except ValueError:
+                continue
+
+        # Add new writes to queue for file
+        
+
     def enqueue_read(self, request):
         """
         Safely enqueue a read operation. Attempt to combine reads of the same file
@@ -164,6 +180,12 @@ class MasterNode:
         else:
             sortednodetable = sorted(self.nodetable, key=lambda key: len(self.nodetable[key]))
             file_nodes = sortednodetable[:4]
+            # Add file to filetable
+            self.filetable[filename] = []
+            # Fix node and file tables
+            for node in file_nodes:
+                self.nodetable[node].append(filename)
+                self.filetable[filename].append(node)
 
         # Add each write node to the ack table
         for node in file_nodes:
