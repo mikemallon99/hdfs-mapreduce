@@ -27,6 +27,10 @@ def get_id():
     return self_id
 
 
+def is_in_group():
+    return in_group
+
+
 def listen_thread(server_ip, port, is_introducer):
     """
     Listen for messages from group members. Update membership list accordingly.

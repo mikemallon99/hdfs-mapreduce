@@ -95,13 +95,15 @@ def handle_sdfs_input(cmd, arguments):
     if command == CommandType.START_SDFS:
         if sdfs_init:
             logging.warning("SDFS already started!")
-        else:
+        elif failure_detector.is_in_group():
             sdfs_init = True
             # start master node on this machine
             master_t = threading.Thread(target=master_thread, args=())
             master_t.start()
             # TODO == fd adds members using socket.gethostname by default, which is the fa20-...
             logging.info("SDFS started!")
+        else:
+            logging.warning("Not in group, must join before starting sdfs")
     return ret_msg
 
 
