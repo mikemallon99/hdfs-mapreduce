@@ -9,9 +9,10 @@ QHANDLER_PORT = 12346
 
 ack_available = threading.Event()
 
+
 class MasterNode:
     def __init__(self, nodes, node_ip):
-        self.nodetable = {}  # TODO == easier to make this a list?
+        self.nodetable = {}
         self.filetable = {}
         self.acktable = {}
         self.op_queue = []
@@ -61,7 +62,6 @@ class MasterNode:
 
         # Add new writes to queue for file
 
-
     def enqueue_read(self, request):
         """
         Safely enqueue a read operation. Attempt to combine reads of the same file
@@ -88,6 +88,11 @@ class MasterNode:
         self.op_queue.append(request)
         self.queue_lock.release()
 
+    def enqueue_ls(self, request):
+        """
+        safely enqueue an ls operation at the end of the queue
+        """
+
     def queue_manager_thread(self):
         """
         Listen for messages from group members. Update membership list accordingly.
@@ -108,6 +113,8 @@ class MasterNode:
                 self.enqueue_read(request_json)
             elif request_json['op'] == 'write':
                 self.enqueue_write(request_json)
+            elif request_json['op'] == 'ls':
+                self.enqueue_ls(request_json)
 
     def listener_thread(self):
         """
