@@ -42,8 +42,8 @@ class MasterNode:
 
     def stop_master(self):
         self.qman_sock.close()
-        self.qhan_sock.close()
         self.list_sock.close()
+        self.qhan_sock.close()
 
         logging.info("Stopping master sockets")
 

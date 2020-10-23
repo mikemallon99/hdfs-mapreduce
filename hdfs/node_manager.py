@@ -41,6 +41,13 @@ class NodeManager:
             requested_thread = threading.Thread(target=self.wait_for_sdfs_start)
             requested_thread.start()
 
+    def stop_threads(self):
+        if self.master_manager:
+            self.master_manager.stop_master()
+        if self.slave_manager:
+            self.slave_manager.stop_slave()
+        logging.info("Stopping all processes from KeyboardInterrupt")
+
     def process_input(self, command, arguments):
         if command in fd_cmds:
             if not arguments == []:

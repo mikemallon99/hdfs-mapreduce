@@ -29,22 +29,25 @@ def cmd_thread():
     """
     print("Text interface with HDFS system: ")
     host_addr = socket.gethostname()
-    while True:
-        u_input = input(f"<{host_addr.split('.')[0]} /> ")
+    try:
+        while True:
+            u_input = input(f"<{host_addr.split('.')[0]} /> ")
 
-        # check if input empty
-        if u_input is not "":
-            split_args = u_input.split()
-        else:
-            continue
+            # check if input empty
+            if u_input is not "":
+                split_args = u_input.split()
+            else:
+                continue
 
-        # split the input into command + arguments
-        cmd = split_args[0]
-        optional_args = []
-        if len(split_args) > 1:
-            optional_args = split_args[1:]
-        # TODO == do something with return messages or not?
-        node_manager.process_input(cmd, optional_args)
+            # split the input into command + arguments
+            cmd = split_args[0]
+            optional_args = []
+            if len(split_args) > 1:
+                optional_args = split_args[1:]
+            # TODO == do something with return messages or not?
+            node_manager.process_input(cmd, optional_args)
+    except KeyboardInterrupt:
+        node_manager.stop_threads()
 
 
 def parse_args():
