@@ -3,16 +3,16 @@ import socket
 import logging
 import json
 import threading
-from enum import Enum
 
 fd_cmds = ["join", "list", "id", "leave", "fail"]
 dfs_cmds = ["start_sdfs", "master"]  # TODO == add more of these
 
 START_PORT = 12344
 
+
 def json_to_bytes(msg):
-    msg_string = msg.encode("UTF-8")
-    return json.dumps(msg_string)
+    msg_string = json.dumps(msg)
+    return msg_string.encode("UTF-8")
 
 
 def bytes_to_json(b):
