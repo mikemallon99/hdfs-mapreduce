@@ -39,7 +39,7 @@ def send_start_sdfs(node_list):
             while True:
                 data = sock.recv(4096)
                 if not data:
-                    logging.warning("Blank message received")
+                    continue
                 else:
                     logging.info("Ack received: "+data.decode("UTF-8"))
                     break
@@ -76,7 +76,7 @@ def wait_for_sdfs_start_thread():
                         data = connection.recv(4096)
                     except ConnectionResetError:
                         logging.error("Client connection error")
-                    logging.info("Received request from "+address+": {0}".format(data))
+                    logging.info("Received request from "+str(address)+": {0}".format(data))
                     if not data:
                         logging.warning("No data received, not starting sdfs...")
 
