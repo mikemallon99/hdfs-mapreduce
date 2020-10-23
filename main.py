@@ -49,7 +49,7 @@ def send_start_sdfs(node_list):
 
 # TODO == move this stuff to master_node.py?
 def master_thread():
-    slaves_dict = failure_detector.mem_list.get_alive_nodes_not_me(socket.gethostname())
+    slaves_dict = failure_detector.mem_list.get_alive_nodes_not_me(my_id=failure_detector.get_id())
     slaves_list = []
     print(slaves_dict)
     for node in slaves_dict:
