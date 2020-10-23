@@ -65,7 +65,7 @@ class SlaveNode():
             logging.info(f"Attempting to connect to:{target_node}")
             tcp_socket_send.connect((target_node, TCP_PORT))
             # Transfer the file to the request machine
-            tcp_socket_send.send(f"{filename}|{filesize}")
+            tcp_socket_send.send(f"{filename}|{filesize}".encode())
             with open("hdfs_files/"+filename, "rb") as f:
                 while True:
                     bytes_read = f.read(4096)
@@ -98,13 +98,12 @@ class SlaveNode():
         filename = request['filename']
         filesize = os.path.getsize("hdfs_files/"+filename)
 
-        tcp_socket_send = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        tcp_socket_send.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        #tcp_socket_send.bind((socket.gethostname(), TCP_PORT))
 
         for request_node in request_nodes:
-            c = tcp_socket_send.connect((request_node, TCP_PORT))
-            c.send(f"{filename}|{filesize}")
+            tcp_socket_send = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            tcp_socket_send.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+            tcp_socket_send.connect((request_node, TCP_PORT))
+            tcp_socket_send.send(f"{filename}|{filesize}".encode())
             # Transfer the file to the request machine
             with open("hdfs_files/"+filename, "rb") as f:
                 while True:
@@ -112,8 +111,7 @@ class SlaveNode():
                     if not bytes_read:
                         break
                     c.sendall(bytes_read)
-            c.close()
-        tcp_socket_send.close()
+            tcp_socket_send.close()
 
         logging.info(f"Successfully sent file: {filename} to node: {request_nodes}")
 
