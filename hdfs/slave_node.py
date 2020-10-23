@@ -59,9 +59,13 @@ class SlaveNode():
         filename = request['filename']
         filesize = os.path.getsize("hdfs_files/" + filename)
 
+        tcp_socket_send = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        tcp_socket_send.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        tcp_socket_send.bind((socket.gethostname(), TCP_PORT))
+
         for target_node in target_nodes:
             logging.info(f"Attempting to connect to:{target_node}")
-            c = self.tcp_socket.connect((target_node, TCP_PORT))
+            c = tcp_socket_send.connect((target_node, TCP_PORT))
             # Transfer the file to the request machine
             c.send(f"{filename}|{filesize}")
             with open("hdfs_files/"+filename, "rb") as f:
@@ -71,6 +75,8 @@ class SlaveNode():
                         break
                     c.sendall(bytes_read)
             c.close()
+
+        tcp_socket_send.close()
 
         logging.info(f"Successfully wrote file: {filename} to nodes: {target_nodes}")
 
