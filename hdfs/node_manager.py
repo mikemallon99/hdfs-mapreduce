@@ -108,6 +108,7 @@ class NodeManager:
         # Start master node
         self.is_slave = False
         self.master_manager = MasterNode(node_dict, socket.gethostname())
+        self.master_manager.start_master()
         for node in node_dict:
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             address = (node.split(":")[0], START_PORT)
