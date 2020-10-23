@@ -4,7 +4,7 @@ from enum import Enum
 from failuredetector import main as failure_detector
 import logging
 import threading
-# from hdfs.master_node import MasterNode
+from hdfs.master_node import MasterNode
 
 sdfs_init = False
 
@@ -51,10 +51,10 @@ def send_start_sdfs(node_list):
 def master_thread():
     slaves_dict = failure_detector.mem_list.get_alive_nodes_not_me(my_id=failure_detector.get_id())
     slaves_list = []
-    print(slaves_dict)
     for node in slaves_dict:
         slaves_list.append(node.split(":")[0])
-    # MasterNode(nodes=slaves_list, node_ip=socket.gethostname())
+    print(socket.gethostname())
+    masternode = MasterNode(nodes=slaves_list, node_ip=socket.gethostname())
     print(slaves_list)
     send_start_sdfs(slaves_list)
     # TODO == begin master threads
@@ -101,8 +101,7 @@ def handle_sdfs_input(cmd, arguments):
         elif failure_detector.is_in_group():
             sdfs_init = True
             # start master node on this machine
-            master_t = threading.Thread(target=master_thread, args=())
-            master_t.start()
+            master_thread()
             # TODO == fd adds members using socket.gethostname by default, which is the fa20-...
             logging.info("SDFS started!")
         else:
