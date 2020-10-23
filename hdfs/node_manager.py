@@ -50,7 +50,7 @@ class NodeManager:
                 if self.send_sdfs_start():
                     logging.info("SDFS started!")
                 else:
-                    logging.info("SDFS not started!")
+                    logging.warning("SDFS not started!")
 
         else:
             logging.warning("Unknown command entered\n")
