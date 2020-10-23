@@ -145,10 +145,6 @@ class MasterNode:
         Continuously completes tasks inputted into the operation queue
         Does not attempt the next task until the last task is totally finished
         """
-        self.qhan_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        self.qhan_sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        self.qhan_sock.bind((self.node_ip, QMANAGER_PORT))
-
         while True:
             # Check for an update in the queue
             queue_update = False
@@ -164,10 +160,10 @@ class MasterNode:
                 # Handle the request
                 if request['op'] == 'read':
                     logging.info(f"Handling read request from {request['sender_host']}")
-                    self.handle_read(request, self.qhan_sock)
+                    self.handle_read(request, self.list_sock)
                 elif request['op'] == 'write':
                     logging.info(f"Handling write request from {request['sender_host']}")
-                    self.handle_write(request, self.qhan_sock)
+                    self.handle_write(request, self.list_sock)
 
     def handle_write(self, request, sock):
         """
