@@ -109,7 +109,11 @@ class NodeManager:
         node_dict = self.mem_list.get_alive_nodes_not_me(my_id=self.fd_manager.get_id())
         # Start master node
         self.is_slave = False
-        self.master_manager = MasterNode(node_dict, socket.gethostname())
+        nodes = []
+        for node in node_dict.keys():
+            nodes.append(node.split(":")[0])
+
+        self.master_manager = MasterNode(nodes, socket.gethostname())
         self.master_manager.start_master()
         for node in node_dict:
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
