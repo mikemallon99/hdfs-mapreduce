@@ -53,6 +53,18 @@ class NodeManager:
                     logging.info("SDFS started!")
                 else:
                     logging.warning("SDFS not started!")
+            if command == "ls":
+                node_list = []
+                if self.is_slave:
+                    node_list = self.slave_manager.send_ls_to_master(arguments[0])
+                else:
+                    node_list = self.master_manager.retrieve_file_nodes(arguments[0])
+                if not node_list:
+                    print("File not found in SDFS")
+                    return
+                print("Found file "+arguments[0]+" in "+str(len(node_list))+" nodes:")
+                for node in node_list:
+                    print(str(node))
 
         else:
             logging.warning("Unknown command entered\n")

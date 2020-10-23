@@ -8,6 +8,7 @@ import os
 QMANAGER_PORT = 12345
 QHANDLER_PORT = 12346
 TCP_PORT = 12347
+LS_PORT = 12348
 
 class SlaveNode():
     def __init__(self, master_host, self_host):
@@ -37,13 +38,39 @@ class SlaveNode():
         self.qman_socket.close()
         logging.info("Stopping slave sockets")
 
+    def send_ls_to_master(self, filename):
+        ls_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        ls_sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        ls_sock.bind((self.self_host, LS_PORT))
+        request = {'op': 'ls', 'sender_host': self.self_host, 'filename': filename}
+        message_data = json.dumps(request).encode()
+        self.qman_socket.sendto(message_data, (self.master_host, QMANAGER_PORT))
+        logging.info("ls successfully queued")
+
+        # TODO == make this its own thread, start listening for response before req sent?
+        ls_recvd = False
+        data = None
+        recvd_list = []
+        try:
+            data, sender_adr = ls_sock.recvfrom(4096)
+        except KeyboardInterrupt:
+            logging.error('Keyboard interrupt, close socket...')
+            if ls_sock:
+                ls_sock.close()
+        ls_sock.close()
+        if not data:
+            logging.error("No data received from ls")
+        else:
+            recvd_list = json.loads(data.decode("UTF-8"))
+        return recvd_list
+
     def send_write_request(self, filename):
         """
         Send a write request to the master queue manager
         """
         request = {}
         request['op'] = 'write'
-        request['sender_host'] = self.self_host
+        request['sender_host'] = self.self_host  # TODO == why need both?
         request['addr'] = [self.self_host]
         request['filename'] = filename
 
