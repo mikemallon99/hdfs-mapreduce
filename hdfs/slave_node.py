@@ -126,7 +126,7 @@ class SlaveNode():
         """
         # Get file information
         received = c.recv(4096).decode()
-        filename, filesize, file_content = received.split("|")
+        filename, filesize= received.split("|")
         filename = os.path.basename(filename)
         filesize = int(filesize)
 
