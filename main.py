@@ -125,6 +125,7 @@ def cmd_thread():
         if len(split_args) > 1:
             optional_args = split_args[1:]
 
+        print(optional_args)
         cmd_ret = None
         # TODO == do something with the return messages or not?
         if cmd in fd_cmds:
