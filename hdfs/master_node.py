@@ -182,7 +182,7 @@ class MasterNode:
                     self.handle_read(request, self.list_sock)
                 elif request['op'] == 'write':
                     logging.info(f"Handling write request from {request['sender_host']}")
-                    self.handle_write(request, self.qhan_sock)
+                    self.handle_write(request, self.list_sock)
                 elif request['op'] == 'ls':
                     logging.info(f"Handling ls request from {request['sender_host']}")
                     self.handle_ls(request)
