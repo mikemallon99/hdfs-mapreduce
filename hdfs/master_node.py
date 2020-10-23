@@ -94,7 +94,7 @@ class MasterNode:
             request_json = parse_and_validate_message(data)
 
             if request_json['ack'] == True:
-                self.decrement_ack(address)
+                self.decrement_ack(data['sender_host'])
 
     def decrement_ack(self, node):
         """
