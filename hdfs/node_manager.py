@@ -62,8 +62,10 @@ class NodeManager:
                     logging.info("SDFS started!")
                 else:
                     logging.info("SDFS not started!")
-            if command == "put":
-                self.slave_manager.send_write_request(filename=arguments[0])
+            elif command == "put":
+                self.slave_manager.send_write_request(localfilename=arguments[0], sdfsfilename=arguments[1])
+            elif command == "get":
+                self.slave_manager.send_read_request(localfilename=arguments[1], sdfsfilename=arguments[0])
         else:
             logging.warning("Unknown command entered\n")
 
