@@ -103,6 +103,7 @@ class MasterNode:
             request_json = parse_and_validate_message(data)
             if request_json is None:
                 # The data received is not valid
+                logging.info(f"Recieved a request from {request_json['sender_host']}")
                 continue
 
             # Enqueue the data
