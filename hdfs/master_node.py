@@ -59,7 +59,7 @@ class MasterNode:
                 continue
 
         # Add new writes to queue for file
-        
+
 
     def enqueue_read(self, request):
         """
