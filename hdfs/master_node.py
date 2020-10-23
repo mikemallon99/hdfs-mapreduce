@@ -105,8 +105,10 @@ class MasterNode:
             # Enqueue the data
             if request_json['op'] == 'read':
                 self.enqueue_read(request_json)
+                logging.info(f"Recieved read request from {request_json['sender_host']}")
             elif request_json['op'] == 'write':
                 self.enqueue_write(request_json)
+                logging.info(f"Recieved write request from {request_json['sender_host']}")
 
     def listener_thread(self):
         """
@@ -155,10 +157,10 @@ class MasterNode:
             if queue_update:
                 # Handle the request
                 if request['op'] == 'read':
-                    logging.info(f"Handling read request from {request['addr']}")
+                    logging.info(f"Handling read request from {request['sender_host']}")
                     self.handle_read(request, self.qhan_sock)
                 elif request['op'] == 'write':
-                    logging.info(f"Handling write request from {request['addr']}")
+                    logging.info(f"Handling write request from {request['sender_host']}")
                     self.handle_write(request, self.qhan_sock)
 
     def handle_write(self, request, sock):
