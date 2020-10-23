@@ -60,6 +60,7 @@ class SlaveNode():
         filesize = os.path.getsize("hdfs_files/" + filename)
 
         for target_node in target_nodes:
+            logging.info(f"Attempting to connect to:{target_node}")
             c = self.tcp_socket.connect((target_node, TCP_PORT))
             # Transfer the file to the request machine
             c.send(f"{filename}|{filesize}")
@@ -156,6 +157,7 @@ class SlaveNode():
 
         while True:
             c, addr = self.tcp_socket.accept()
+            logging.info(f"Recieved TCP connection from {addr}")
             # Handle recieiving files here
             file_transfer_thread = threading.Thread(target=self.handle_file_transfer, args=(c,))
             file_transfer_thread.start()
