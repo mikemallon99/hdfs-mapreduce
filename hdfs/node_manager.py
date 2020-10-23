@@ -1,4 +1,6 @@
 from failuredetector import main as failure_detector
+from .master_node import MasterNode
+from .slave_node import SlaveNode
 import socket
 import logging
 import json
@@ -85,6 +87,8 @@ class NodeManager:
                         logging.debug("Message received: " + str(message))
                         # TODO == instantiate slave and begin threads
                         # Note: the 'address' of the sender will be the master
+                        self.slave_manager = SlaveNode(message["sender_host"], socket.gethostname())
+                        self.slave_manager.start_slave()
                         logging.info("Begin slave node setup...")
                         ack = {'Type': "ACK"}
                         connection.sendall(json_to_bytes(ack))
@@ -99,12 +103,15 @@ class NodeManager:
             return False
 
         node_dict = self.mem_list.get_alive_nodes_not_me(my_id=self.fd_manager.get_id())
+        # Start master node
+        self.is_slave = False
+        self.master_manager = MasterNode(node_dict, socket.gethostname())
         for node in node_dict:
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             address = (node.split(":")[0], START_PORT)
             sock.connect(address)
             try:
-                message = {'Type': "START_SDFS"}
+                message = {'Type': "START_SDFS", "sender_host": socket.gethostname()}
                 sock.sendall(json_to_bytes(message))
 
                 while True:
