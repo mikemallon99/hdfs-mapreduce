@@ -71,8 +71,6 @@ class NodeManager:
                     self.slave_manager.send_ls_to_master(arguments[0])
                 else:
                     self.master_manager.retrieve_file_nodes(arguments[0])
-            if command == "put":
-                self.slave_manager.send_write_request(filename=arguments[0])
         else:
             logging.warning("Unknown command entered\n")
 
@@ -160,7 +158,7 @@ class NodeManager:
         if self.sdfs_init:
             if not self.is_slave:
                 logging.debug(str(self.master_manager.nodetable))
-                self.master_manager.node_failure(node_id)
+                self.master_manager.node_failure(node_id.split(":")[0])
                 logging.debug(str(self.master_manager.nodetable))
             elif node_id == self.slave_manager.master_host:
                 logging.debug("Master failed!")

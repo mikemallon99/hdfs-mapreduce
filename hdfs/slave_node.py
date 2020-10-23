@@ -60,6 +60,12 @@ class SlaveNode():
         request['filename'] = sdfsfilename
         request['localfilename'] = localfilename
 
+        try:
+            filesize = os.path.getsize("hdfs_files/" + localfilename)
+        except FileNotFoundError:
+            logging.info("File not found")
+            return
+
         message_data = json.dumps(request).encode()
         self.qman_socket.sendto(message_data, (self.master_host, QMANAGER_PORT))
         logging.info(f"Write to {self.master_host} queued")
@@ -71,7 +77,11 @@ class SlaveNode():
         target_nodes = request['addr']
         localfilename = request['localfilename']
         sdfsfilename = request['filename']
-        filesize = os.path.getsize("hdfs_files/" + localfilename)
+        try:
+            filesize = os.path.getsize("hdfs_files/" + localfilename)
+        except FileNotFoundError:
+            logging.info("File not found")
+            return
 
         for target_node in target_nodes:
             tcp_socket_send = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -112,7 +122,11 @@ class SlaveNode():
         request_nodes = request['addr']
         sdfsfilename = request['filename']
         localfilename = request['localfilename']
-        filesize = os.path.getsize("hdfs_files/"+sdfsfilename)
+        try:
+            filesize = os.path.getsize("hdfs_files/"+sdfsfilename)
+        except FileNotFoundError:
+            logging.info(f"File {sdfsfilename} does not exist")
+            return
 
 
         for request_node in request_nodes:
