@@ -67,6 +67,7 @@ class NodeManager:
     def wait_for_sdfs_start(self):
         address = (socket.gethostname(), START_PORT)
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+            sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
             sock.bind(address)
             logging.info("\nWaiting for message to start sdfs...")
             try:
