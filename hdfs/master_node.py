@@ -56,6 +56,7 @@ class MasterNode:
             try:
                 self.filetable[file].remove(node)
             except ValueError:
+                logging.error("Value error")
                 continue
 
         # Add new writes to queue for file
