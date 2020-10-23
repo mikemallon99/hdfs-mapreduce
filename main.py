@@ -51,12 +51,10 @@ def send_start_sdfs(node_list):
 def master_thread():
     slaves_dict = failure_detector.mem_list.get_alive_nodes_not_me(my_id=failure_detector.get_id())
     slaves_list = []
-    print(slaves_dict)
     for node in slaves_dict:
         slaves_list.append(node)
     # MasterNode(nodes=slaves_list, node_ip=socket.gethostname())
-    # send_start_sdfs(slaves_list)
-    print(slaves_list)
+    send_start_sdfs(slaves_list)
     # TODO == begin master threads
 
 
