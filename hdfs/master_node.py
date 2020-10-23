@@ -174,11 +174,21 @@ class MasterNode:
         file_nodes = []
 
         # First, check if the file is in the network
+        sortednodetable = sorted(self.nodetable, key=lambda key: len(self.nodetable[key]))
         if filename in self.filetable.keys():
             file_nodes = self.filetable.get(filename)
+            # Then, see if there are 4 replicas
+            while len(file_nodes) < 4:
+                # Find the node with the most space that doesnt have the file
+                for node in sortednodetable:
+                    if filename not in self.nodetable[node]:
+                        # Add file to tables
+                        file_nodes.append(node)
+                        self.filetable[filename].append(node)
+                        self.nodetable[node].append(filename)
+                        break
         # Otherwise find nodes with free space
         else:
-            sortednodetable = sorted(self.nodetable, key=lambda key: len(self.nodetable[key]))
             file_nodes = sortednodetable[:4]
             # Add file to filetable
             self.filetable[filename] = []
@@ -204,6 +214,8 @@ class MasterNode:
         valid = False
         while not valid:
             valid = self.validate_acks(request_nodes)
+
+        # TODO: Send out node/file tables somewhere
 
         logging.info("All ACKs recieved, write successful")
 

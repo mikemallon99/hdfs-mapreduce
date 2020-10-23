@@ -7,7 +7,7 @@ import json
 import threading
 
 fd_cmds = ["join", "list", "id", "leave", "fail"]
-dfs_cmds = ["start_sdfs", "master"]  # TODO == add more of these
+dfs_cmds = ["start_sdfs", "master", "put", "get", "delete"]  # TODO == add more of these
 
 START_PORT = 12344
 
@@ -53,7 +53,8 @@ class NodeManager:
                     logging.info("SDFS started!")
                 else:
                     logging.info("SDFS not started!")
-
+            if command == "put":
+                self.slave_manager.send_write_request(filename=arguments[0])
         else:
             logging.warning("Unknown command entered\n")
 
