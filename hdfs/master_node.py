@@ -301,7 +301,7 @@ class MasterNode:
         message['filelist'] = file_list
         message['filename'] = filename
         bytes_sent = ls_sock.sendto(json.dumps(message).encode(), (request['sender_host'], QHANDLER_PORT))
-        if not bytes_sent == len(json.dumps(file_list)):
+        if not bytes_sent == len(json.dumps(message)):
             logging.error("LS message not sent!")
 
     def validate_acks(self, nodes):
