@@ -79,7 +79,7 @@ class NodeManager:
                         message = bytes_to_json(data)
                         if not message['Type'] == "START_SDFS":
                             logging.warning("Invalid message")
-                        logging.debug("Message received: " + message)
+                        logging.debug("Message received: " + str(message))
                         # TODO == instantiate slave and begin threads
                         # Note: the 'address' of the sender will be the master
                         logging.info("Begin slave node setup...")
