@@ -122,13 +122,14 @@ class MasterNode:
                     self.op_queue.pop(0)
                 self.queue_lock.release()
 
-                # Handle the request
-                if request['op'] == 'read':
-                    logging.info(f"Handling read request from {request['addr']}")
-                    self.handle_read(request, sock)
-                elif request['op'] == 'write':
-                    logging.info(f"Handling write request from {request['addr']}")
-                    self.handle_write(request, sock)
+                if queue_update:
+                    # Handle the request
+                    if request['op'] == 'read':
+                        logging.info(f"Handling read request from {request['addr']}")
+                        self.handle_read(request, sock)
+                    elif request['op'] == 'write':
+                        logging.info(f"Handling write request from {request['addr']}")
+                        self.handle_write(request, sock)
 
     def handle_write(self, request, sock):
         """
