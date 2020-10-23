@@ -47,8 +47,11 @@ class NodeManager:
                 if self.sdfs_init:
                     logging.warning("SDFS already started! \n Ignoring command...\n")
                     return
-                self.send_sdfs_start()
-                logging.info("SDFS started!")
+                if self.send_sdfs_start():
+                    logging.info("SDFS started!")
+                else:
+                    logging.info("SDFS not started!")
+
         else:
             logging.warning("Unknown command entered\n")
 
@@ -93,7 +96,7 @@ class NodeManager:
     def send_sdfs_start(self):
         if not self.fd_manager.is_in_group():
             logging.warning("Not in group, must join before starting sdfs")
-            return
+            return False
 
         node_dict = self.mem_list.get_alive_nodes_not_me(my_id=self.fd_manager.get_id())
         for node in node_dict:
@@ -115,3 +118,4 @@ class NodeManager:
                 logging.debug("All start messages sent, socket closed")
                 self.sdfs_init = True
                 sock.close()
+                return True
