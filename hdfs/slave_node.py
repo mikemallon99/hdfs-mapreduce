@@ -104,7 +104,7 @@ class SlaveNode():
 
         tcp_socket_send = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         tcp_socket_send.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        tcp_socket_send.bind((socket.gethostname(), TCP_PORT))
+        #tcp_socket_send.bind((socket.gethostname(), TCP_PORT))
 
         for request_node in request_nodes:
             c = tcp_socket_send.connect((request_node, TCP_PORT))
