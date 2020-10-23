@@ -34,7 +34,7 @@ def send_start_sdfs(node_list):
 
         try:
             message = "START_SDFS"  # TODO == determine the message format
-            sock.sendall(message)
+            sock.sendall(message.encode("UTF-8"))
 
             while True:
                 data = sock.recv(4096)
@@ -80,6 +80,7 @@ def wait_for_sdfs_start_thread():
                     if not data:
                         logging.warning("No data received, not starting sdfs...")
 
+                    logging.debug("Message received: "+data.decode("UTF-8"))
                     # TODO == instantiate slave and begin threads
                     # Note: the 'address' of the sender will be the master
                     logging.info("Begin slave node setup...")
