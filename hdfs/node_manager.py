@@ -135,7 +135,9 @@ class NodeManager:
             logging.debug("Failing node: "+str(node_addr))
         if self.sdfs_init:
             if not self.is_slave:
+                logging.debug(str(self.master_manager.nodetable))
                 self.master_manager.node_failure(node_addr)
+                logging.debug(str(self.master_manager.nodetable))
             elif node_addr == self.slave_manager.master_host:
                 logging.debug("Master failed!")
                 # TODO == call slave function to elect new master
