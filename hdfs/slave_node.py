@@ -68,7 +68,7 @@ class SlaveNode():
             tcp_socket_send.connect((target_node, TCP_PORT))
             # Transfer the file to the request machine
             tcp_socket_send.send(f"{sdfsfilename}|{filesize}|".ljust(4096).encode())
-            with open("hdfs_files/"+sdfsfilename, "rb") as f:
+            with open("hdfs_files/"+localfilename, "rb") as f:
                 while True:
                     bytes_read = f.read(4096)
                     if not bytes_read:
