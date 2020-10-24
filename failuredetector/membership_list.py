@@ -158,11 +158,11 @@ class MembershipList:
 
     def get_most_recent_node(self) -> dict:
         with self.lock:
-            ret_node = None
+            ret_node = {}
             for id, row in self.nodes.items():
-                logging.info(f"Iterating on id: {id}")
+                logging.info(f"Iterating on id")
                 if row.status == Status.ALIVE:
-                    ret_node = row.to_dict()
+                    ret_node[id] = row.to_dict()
             return ret_node
 
     def __getitem__(self, idx) -> Row:
