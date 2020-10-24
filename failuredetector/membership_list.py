@@ -156,14 +156,14 @@ class MembershipList:
                     result.append(id.split(":")[0])
             return result
 
-    def get_most_recent_node(self) -> dict:
+    def get_most_recent_node(self):
         with self.lock:
             ret_node = None
             highest_node = 0
             for id, row in self.nodes.items():
                 node_num = get_display_number(id)
                 if row.status == Status.ALIVE and node_num > highest_node:
-                    ret_node = row.to_dict()
+                    ret_node = id
                     highest_node = node_num
             return ret_node
 
