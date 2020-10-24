@@ -107,7 +107,7 @@ class NodeManager:
                             logging.warning("Invalid message")
                         logging.debug("Message received: " + str(message))
                         self.slave_manager = SlaveNode(message["sender_host"], socket.gethostname())
-                        self.slave_manager.set_callback()
+                        self.slave_manager.set_callback(self.master_backup_callback)
                         self.slave_manager.start_slave()
                         logging.info("Begin slave node setup...")
                         ack = {'Type': "ACK"}
