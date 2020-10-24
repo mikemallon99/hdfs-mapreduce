@@ -71,6 +71,8 @@ class NodeManager:
                     self.slave_manager.send_ls_to_master(arguments[0])
                 else:
                     self.master_manager.retrieve_file_nodes(arguments[0])
+            elif command == "delete":
+                self.slave_manager.send_delete_request(sdfsfilename=arguments[0])
         else:
             logging.warning("Unknown command entered\n")
 

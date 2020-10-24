@@ -49,6 +49,20 @@ class SlaveNode():
         self.qman_socket.sendto(message_data, (self.master_host, QMANAGER_PORT))
         logging.debug("ls successfully queued")
 
+    def send_delete_request(self, sdfsfilename):
+        """
+        Send a delete request to the master queue manager
+        """
+        request = {}
+        request['op'] = 'delete'
+        request['sender_host'] = self.self_host
+        request['addr'] = [self.self_host]
+        request['filename'] = sdfsfilename
+
+        message_data = json.dumps(request).encode()
+        self.qman_socket.sendto(message_data, (self.master_host, QMANAGER_PORT))
+        logging.info(f"Delete to {self.master_host} queued")
+
     def send_write_request(self, localfilename, sdfsfilename):
         """
         Send a write request to the master queue manager

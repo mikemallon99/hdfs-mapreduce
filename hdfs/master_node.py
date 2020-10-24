@@ -185,7 +185,27 @@ class MasterNode:
                     self.handle_write(request, self.list_sock)
                 elif request['op'] == 'ls':
                     logging.info(f"Handling ls request from {request['sender_host']}")
-                    self.handle_ls(request)
+                    self.handle_ls(request, self.list_sock)
+                elif request['op'] == 'delete':
+                    logging.info(f"Handling delete request from {request['sender_host']}")
+                    self.handle_delete(request, self.list_sock)
+
+    def handle_delete(self, request, sock):
+        """
+        Handle a delete operation from the queue.
+        The delete function will remove a file from the file table and
+        delete all of its entries from the nodetable
+        """
+        filename = request['filename']
+
+        # Get the nodes that contain the file
+        nodes = self.filetable.pop(filename)
+        # Remove the filename from all the nodes in the nodetable
+        for node in nodes:
+            self.nodetable[node].remove(filename)
+
+        # TODO -- Add send function here
+        logging.info(f"Successfully deleted {filename} from the file system.")
 
     def handle_write(self, request, sock):
         """
@@ -292,15 +312,14 @@ class MasterNode:
 
         logging.info("All ACKs recieved, read successful")
 
-    def handle_ls(self, request):
-        ls_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    def handle_ls(self, request, sock):
         filename = request['filename']
         file_list = self.retrieve_file_nodes(filename)
         message = {}
         message['op'] = 'disp_ls'
         message['filelist'] = file_list
         message['filename'] = filename
-        bytes_sent = ls_sock.sendto(json.dumps(message).encode(), (request['sender_host'], QHANDLER_PORT))
+        bytes_sent = sock.sendto(json.dumps(message).encode(), (request['sender_host'], QHANDLER_PORT))
         if not bytes_sent == len(json.dumps(message)):
             logging.error("LS message not sent!")
 
