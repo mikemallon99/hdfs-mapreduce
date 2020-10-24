@@ -158,6 +158,7 @@ class NodeManager:
 
     def node_failure_callback(self, node_id, left=False):
         logging.debug("Node manager callback function!")
+        node_id = node_id.split(":")[0]
         if left:
             logging.debug("Node "+str(node_id)+" has left")
         else:
@@ -165,7 +166,7 @@ class NodeManager:
         if self.sdfs_init:
             if not self.is_slave:
                 logging.debug(str(self.master_manager.nodetable))
-                self.master_manager.node_failure(node_id.split(":")[0])
+                self.master_manager.node_failure(node_id)
                 logging.debug(str(self.master_manager.nodetable))
             elif node_id == self.slave_manager.master_host:
                 logging.debug("Master failed!")
