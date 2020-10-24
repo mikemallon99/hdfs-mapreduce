@@ -209,7 +209,6 @@ class MasterNode:
                 for node in sortednodetable:
                     if node not in self.filetable[filename] and node not in request_nodes:
                         # Add file to tables
-                        file_nodes.append(node)
                         self.filetable[filename].append(node)
                         self.nodetable[node].append(filename)
                         break
@@ -222,7 +221,6 @@ class MasterNode:
             counter = 0
             for node in sortednodetable:
                 if node not in request_nodes:
-                    file_nodes.append(node)
                     self.nodetable[node].append(filename)
                     self.filetable[filename].append(node)
                     counter += 1
