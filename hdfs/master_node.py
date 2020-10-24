@@ -62,8 +62,15 @@ class MasterNode:
             except ValueError:
                 logging.error("Value error")
                 continue
+            # Add write to queue
+            request = {}
+            request['op'] = 'write'
+            request['sender_host'] = self.node_ip  # TODO == why need both?
+            request['addr'] = self.filetable[file][0]
+            request['filename'] = file
+            request['localfilename'] = file
 
-        # Add new writes to queue for file
+            self.enqueue_write_front(request)
 
     def enqueue_read(self, request):
         """
@@ -72,9 +79,12 @@ class MasterNode:
         self.queue_lock.acquire()
         add_flag = True
         # Check if the file is already being requested
-        # TODO: Stop once theres a write of the same file in the queue
         for i in range(0, len(self.op_queue)):
             entry = self.op_queue[i]
+            # Stop if entry is writing the file
+            if entry['filename'] == request['filename'] and entry['op'] == 'write':
+                self.op_queue.append(request)
+                break
             if entry['filename'] == request['filename'] and entry['op'] == 'read':
                 entry['addr'].append(request['addr'])
                 add_flag = False
@@ -82,6 +92,14 @@ class MasterNode:
         # Otherwise pin it to the end of the queue
         if add_flag:
             self.op_queue.append(request)
+        self.queue_lock.release()
+
+    def enqueue_write_front(self, request):
+        """
+        Safely enqueue a write operation at the end of the queue
+        """
+        self.queue_lock.acquire()
+        self.op_queue.insert(0, request)
         self.queue_lock.release()
 
     def enqueue_write(self, request):

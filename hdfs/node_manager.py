@@ -42,10 +42,10 @@ class NodeManager:
             requested_thread.start()
 
     def stop_threads(self):
-        if self.is_slave:
-            self.slave_manager.stop_slave()
-        else:
+        if not self.is_slave:
             self.master_manager.stop_master()
+        else:
+            self.slave_manager.stop_slave()
         logging.info("Stopping all processes from KeyboardInterrupt")
 
     def process_input(self, command, arguments):
