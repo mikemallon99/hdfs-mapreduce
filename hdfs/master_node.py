@@ -108,6 +108,14 @@ class MasterNode:
         self.op_queue.append(request)
         self.queue_lock.release()
 
+    def enqueue_store(self, request):
+        """
+        safely enqueue an delete operation at the end of the queue
+        """
+        self.queue_lock.acquire()
+        self.op_queue.append(request)
+        self.queue_lock.release()
+
     def retrieve_file_nodes(self, filename):
         filenodes = []
         if filename in self.filetable.keys():
@@ -143,6 +151,9 @@ class MasterNode:
             elif request_json['op'] == 'delete':
                 self.enqueue_ls(request_json)
                 logging.info(f"Recieved delete request from {request_json['sender_host']}")
+            elif request_json['op'] == 'store':
+                self.enqueue_ls(request_json)
+                logging.info(f"Recieved store request from {request_json['sender_host']}")
             else:
                 logging.info(f"Recieved a request from {request_json['sender_host']}")
 
@@ -200,6 +211,28 @@ class MasterNode:
                 elif request['op'] == 'delete':
                     logging.info(f"Handling delete request from {request['sender_host']}")
                     self.handle_delete(request, self.list_sock)
+                elif request['op'] == 'store':
+                    logging.info(f"Handling delete request from {request['sender_host']}")
+                    self.handle_store(request, self.list_sock)
+
+    def handle_store(self, request, sock):
+        """
+        Handle a store operation from the queue.
+        The store function will return all files being stored
+        at the requesting machine.
+        """
+        request_node = request['sender_host']
+        # Retrieve all files from nodetable
+        files = self.nodetable[request_node].copy()
+
+        # Formulate response
+        response = dict.copy(request)
+        response['filelist'] = files
+        response['sender_host'] = self.node_ip
+
+        logging.info(f"Sending node data to {request_node}")
+        message_data = json.dumps(response).encode()
+        sock.sendto(message_data, (request_nodes, QHANDLER_PORT))
 
     def handle_delete(self, request, sock):
         """

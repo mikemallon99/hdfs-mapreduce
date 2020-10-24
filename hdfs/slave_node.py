@@ -41,9 +41,9 @@ class SlaveNode():
         logging.info("Stopping slave sockets")
 
     def send_ls_to_master(self, filename):
-        ls_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        ls_sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        ls_sock.bind((self.self_host, LS_PORT))
+        """
+        Sends a ls request to the master queue manager
+        """
         request = {'op': 'ls', 'sender_host': self.self_host, 'filename': filename}
         message_data = json.dumps(request).encode()
         self.qman_socket.sendto(message_data, (self.master_host, QMANAGER_PORT))
@@ -62,6 +62,18 @@ class SlaveNode():
         message_data = json.dumps(request).encode()
         self.qman_socket.sendto(message_data, (self.master_host, QMANAGER_PORT))
         logging.info(f"Delete to {self.master_host} queued")
+
+    def send_store_request(self):
+        """
+        Send a delete request to the master queue manager
+        """
+        request = {}
+        request['op'] = 'store'
+        request['sender_host'] = self.self_host
+
+        message_data = json.dumps(request).encode()
+        self.qman_socket.sendto(message_data, (self.master_host, QMANAGER_PORT))
+        logging.info(f"Store to {self.master_host} queued")
 
     def send_write_request(self, localfilename, sdfsfilename):
         """
@@ -183,6 +195,24 @@ class SlaveNode():
         self.send_ack_message()
         logging.info(f"Write to {filename} complete")
 
+    def handle_store_response(self, request):
+        file_list = request['filelist']
+        if not file_list:
+            logging.info("No files assigned to this node found in SDFS!")
+            return
+        logging.info("Files located at this node:")
+        for file in file_list:
+            logging.info(file)
+
+    def handle_ls_response(self, request):
+        file_list = request['filelist']
+        if not file_list:
+            logging.info("File not found in SDFS!")
+            continue
+        logging.info("Found the file " + request['filename'] + " at nodes:")
+        for file in file_list:
+            logging.info(file)
+
     def send_ack_message(self):
         """
         Sends a generic ack message to the master node
@@ -230,10 +260,8 @@ class SlaveNode():
                 write_thread = threading.Thread(target=self.handle_write_request, args=(request_json,))
                 write_thread.start()
             elif request_json['op'] == 'disp_ls':
-                file_list = request_json['filelist']
-                if not file_list:
-                    logging.info("File not found in SDFS!")
-                    continue
-                logging.info("Found the file "+request_json['filename']+" at nodes:")
-                for file in file_list:
-                    logging.info(file)
+                ls_thread = threading.Thread(target=self.handle_ls_response, args=(request_json,))
+                ls_thread.start()
+            elif request_json['op'] == 'store':
+                ls_thread = threading.Thread(target=self.handle_store_response, args=(request_json,))
+                ls_thread.start()
