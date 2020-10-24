@@ -334,7 +334,7 @@ class MasterNode:
             valid = self.validate_acks(request_nodes)
 
         # TODO: Send out node/file tables somewhere
-        self.send_backup_information()
+        self.send_backup_information(sock)
 
         logging.info("All ACKs recieved, write successful")
 
