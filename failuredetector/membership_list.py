@@ -155,12 +155,11 @@ class MembershipList:
             return result
 
     def get_most_recent_node(self):
-        with self.lock:
-            ret_node = None
-            for id, row in self.nodes.items():
-                if row.status == Status.ALIVE:
-                    ret_node = id
-            return ret_node
+        ret_node = None
+        for id, row in self.nodes.items():
+            if row.status == Status.ALIVE:
+                ret_node = id
+        return ret_node
 
     def __getitem__(self, idx) -> Row:
         with self.lock:
