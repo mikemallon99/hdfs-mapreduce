@@ -7,7 +7,7 @@ import json
 import threading
 
 fd_cmds = ["join", "list", "id", "leave", "fail"]
-dfs_cmds = ["start_sdfs", "master", "put", "get", "delete", "ls"]  # TODO == add more of these
+dfs_cmds = ["start_sdfs", "master", "put", "get", "delete", "ls", "store"]
 
 # TODO == need to input nodes as just the hostname, not the hostname+time+port
 
