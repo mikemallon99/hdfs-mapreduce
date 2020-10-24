@@ -156,7 +156,7 @@ class MembershipList:
                     result.append(id.split(":")[0])
             return result
 
-    def get_most_recent_node(self):
+    def get_most_recent_node(self) -> dict:
         with self.lock:
             ret_node = None
             for id, row in self.nodes.items():
