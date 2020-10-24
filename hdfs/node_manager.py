@@ -190,6 +190,7 @@ class NodeManager:
     def elect_new_master(self):
         logging.debug("Starting process to elect the new master...")
         new_master_id = self.mem_list.get_most_recent_node()
+        logging.info(f"Selected node: {new_master_id}")
         if not new_master_id:
             logging.error("Failed to find new master!")
         new_master_ip = new_master_id.split(":")[0]
