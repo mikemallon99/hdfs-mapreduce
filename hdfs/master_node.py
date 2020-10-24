@@ -100,6 +100,14 @@ class MasterNode:
         self.op_queue.append(request)
         self.queue_lock.release()
 
+    def enqueue_delete(self, request):
+        """
+        safely enqueue an delete operation at the end of the queue
+        """
+        self.queue_lock.acquire()
+        self.op_queue.append(request)
+        self.queue_lock.release()
+
     def retrieve_file_nodes(self, filename):
         filenodes = []
         if filename in self.filetable.keys():
@@ -132,6 +140,9 @@ class MasterNode:
             elif request_json['op'] == 'ls':
                 self.enqueue_ls(request_json)
                 logging.info(f"Recieved ls request from {request_json['sender_host']}")
+            elif request_json['op'] == 'delete':
+                self.enqueue_ls(request_json)
+                logging.info(f"Recieved delete request from {request_json['sender_host']}")
             else:
                 logging.info(f"Recieved a request from {request_json['sender_host']}")
 
