@@ -157,8 +157,10 @@ class MembershipList:
             return result
 
     def get_most_recent_node(self) -> dict:
+        logging.info(f"Iterating on id before lock")
         with self.lock:
             ret_node = {}
+            logging.info(f"Iterating on id after lock")
             for id, row in self.nodes.items():
                 logging.info(f"Iterating on id")
                 if row.status == Status.ALIVE:
