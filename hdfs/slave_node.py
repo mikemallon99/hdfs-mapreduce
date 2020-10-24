@@ -208,7 +208,7 @@ class SlaveNode():
         file_list = request['filelist']
         if not file_list:
             logging.info("File not found in SDFS!")
-            continue
+            return
         logging.info("Found the file " + request['filename'] + " at nodes:")
         for file in file_list:
             logging.info(file)
