@@ -4,7 +4,7 @@ import copy
 import threading
 import logging
 from enum import Enum
-from .utils import get_display_id, log_to_file, get_hostname
+from .utils import get_display_id, log_to_file, get_hostname, get_display_number
 from typing import Iterator, Tuple
 
 
@@ -157,14 +157,14 @@ class MembershipList:
             return result
 
     def get_most_recent_node(self) -> dict:
-        logging.info(f"Iterating on id before lock")
         with self.lock:
-            ret_node = {}
-            logging.info(f"Iterating on id after lock")
+            ret_node = None
+            highest_node = 0
             for id, row in self.nodes.items():
-                logging.info(f"Iterating on id")
-                if row.status == Status.ALIVE:
-                    ret_node[id] = row.to_dict()
+                node_num = get_display_number(id)
+                if row.status == Status.ALIVE and node_num > highest_node:
+                    ret_node = row.to_dict()
+                    highest_node = node_num
             return ret_node
 
     def __getitem__(self, idx) -> Row:

@@ -32,6 +32,13 @@ def get_display_id(node_id) -> str:
         return f"{id_num} ({timestamp})"
     return node_id
 
+def get_display_number(node_id) -> str:
+    res = re.match(r"fa20-cs425-g\d\d-(\d+).cs.illinois.edu:\d+-(\d\d:\d\d:\d\d)", node_id)
+    if res:
+        id_num = res.groups()[0]
+        return id_num
+    return node_id
+
 def log_to_file(content):
     with open(LOG_FILE_NAME, "a+") as file:
         now = datetime.now().strftime("%c")
