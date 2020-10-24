@@ -148,6 +148,7 @@ class MembershipList:
             return result
 
     def get_alive_nodes_ip_not_me(self) -> list:
+        logging.info(f"About to get other nodes in master")
         with self.lock:
             result = []
             for id, row in self.nodes.items():
