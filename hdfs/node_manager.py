@@ -42,10 +42,10 @@ class NodeManager:
             requested_thread.start()
 
     def stop_threads(self):
-        if self.master_manager is not None:
-            self.master_manager.stop_master()
-        if self.slave_manager is not None:
+        if self.is_slave:
             self.slave_manager.stop_slave()
+        else:
+            self.master_manager.stop_master()
         logging.info("Stopping all processes from KeyboardInterrupt")
 
     def process_input(self, command, arguments):
@@ -61,14 +61,16 @@ class NodeManager:
                 if self.send_sdfs_start():
                     logging.info("SDFS started!")
                 else:
-                    logging.warning("SDFS not started!")
-            if command == "ls":
+                    logging.info("SDFS not started!")
+            elif command == "put":
+                self.slave_manager.send_write_request(localfilename=arguments[0], sdfsfilename=arguments[1])
+            elif command == "get":
+                self.slave_manager.send_read_request(localfilename=arguments[1], sdfsfilename=arguments[0])
+            elif command == "ls":
                 if self.is_slave:
                     self.slave_manager.send_ls_to_master(arguments[0])
                 else:
                     self.master_manager.retrieve_file_nodes(arguments[0])
-            if command == "put":
-                self.slave_manager.send_write_request(filename=arguments[0])
         else:
             logging.warning("Unknown command entered\n")
 
@@ -156,7 +158,7 @@ class NodeManager:
         if self.sdfs_init:
             if not self.is_slave:
                 logging.debug(str(self.master_manager.nodetable))
-                self.master_manager.node_failure(node_id)
+                self.master_manager.node_failure(node_id.split(":")[0])
                 logging.debug(str(self.master_manager.nodetable))
             elif node_id == self.slave_manager.master_host:
                 logging.debug("Master failed!")
