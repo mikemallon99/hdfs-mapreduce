@@ -232,7 +232,7 @@ class MasterNode:
 
         logging.info(f"Sending node data to {request_node}")
         message_data = json.dumps(response).encode()
-        sock.sendto(message_data, (request_nodes, QHANDLER_PORT))
+        sock.sendto(message_data, (request_node, QHANDLER_PORT))
 
     def handle_delete(self, request, sock):
         """
