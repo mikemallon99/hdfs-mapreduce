@@ -160,6 +160,7 @@ class MembershipList:
         with self.lock:
             ret_node = None
             for id, row in self.nodes.items():
+                logging.info(f"Iterating on id: {id}")
                 if row.status == Status.ALIVE:
                     ret_node = row.to_dict()
             return ret_node
