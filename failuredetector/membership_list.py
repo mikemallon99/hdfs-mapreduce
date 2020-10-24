@@ -117,7 +117,7 @@ class MembershipList:
     def mark_failed(self, id: str):
         with self.lock:
             self.nodes[id].status = Status.FAILED
-            self.failure_callback(id)
+        self.failure_callback(id)
         log_to_file(f"Node {id} failed.")
 
     def contains_node(self, id: str) -> bool:
