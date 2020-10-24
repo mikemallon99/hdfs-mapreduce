@@ -207,7 +207,7 @@ class MasterNode:
             while len(file_nodes) < 4 and len(file_nodes) < len(self.nodetable.keys()) - len(request_nodes):
                 # Find the node with the most space that doesnt have the file
                 for node in sortednodetable:
-                    if filename not in self.nodetable[node] and node not in request_nodes:
+                    if node not in self.filetable[filename] and node not in request_nodes:
                         # Add file to tables
                         file_nodes.append(node)
                         self.filetable[filename].append(node)
