@@ -41,7 +41,7 @@ class MasterNode:
         node_files = self.nodetable.pop(self.node_ip, [])
         for file in node_files:
             try:
-                self.filetable[file].remove(node)
+                self.filetable[file].remove(self.node_ip)
             except ValueError:
                 logging.error("Value error")
                 continue
