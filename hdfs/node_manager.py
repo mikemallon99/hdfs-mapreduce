@@ -195,7 +195,7 @@ class NodeManager:
         if not new_master_id:
             logging.error("Failed to find new master!")
         new_master_ip = new_master_id.split(":")[0]
-        if new_master_ip == self.slave_manager.master_host:
+        if new_master_ip == self.slave_manager.self_host:
             self.slave_manager.stop_slave()
             self.slave_manager = None
             self.is_slave = False
