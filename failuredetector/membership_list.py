@@ -108,7 +108,7 @@ class MembershipList:
     def mark_left(self, id: str):
         with self.lock:
             self.nodes[id].status = Status.LEFT
-            self.failure_callback(id, True)
+        self.failure_callback(id, True)
         if get_hostname() in id:
             log_to_file(f"Node (me) {id} left the group.")
         else:
