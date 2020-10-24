@@ -161,7 +161,7 @@ class MembershipList:
             ret_node = None
             highest_node = 0
             for id, row in self.nodes.items():
-                node_num = get_display_number(id)
+                node_num = int(get_display_number(id))
                 if row.status == Status.ALIVE and node_num > highest_node:
                     ret_node = id
                     highest_node = node_num
