@@ -146,6 +146,22 @@ class MembershipList:
                     result[id] = row.to_dict()
             return result
 
+    def get_alive_nodes_ip_not_me(self) -> list:
+        with self.lock:
+            result = []
+            for id, row in self.nodes.items():
+                if row.status == Status.ALIVE:
+                    result.append(id.split(":")[0])
+            return result
+
+    def get_most_recent_node(self):
+        with self.lock:
+            ret_node = None
+            for id, row in self.nodes.items():
+                if row.status == Status.ALIVE:
+                    ret_node = id
+            return ret_node
+
     def __getitem__(self, idx) -> Row:
         with self.lock:
             return self.nodes[idx]

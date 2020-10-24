@@ -32,6 +32,8 @@ class NodeManager:
         self.slave_manager = None
         self.is_slave = True
         self.sdfs_init = False
+        self.backup_nodetable = {}
+        self.backup_filetable = {}
 
     def start_thread(self, thread_name):
         if not thread_name:
@@ -105,6 +107,7 @@ class NodeManager:
                             logging.warning("Invalid message")
                         logging.debug("Message received: " + str(message))
                         self.slave_manager = SlaveNode(message["sender_host"], socket.gethostname())
+                        self.slave_manager.set_callback()
                         self.slave_manager.start_slave()
                         logging.info("Begin slave node setup...")
                         ack = {'Type': "ACK"}
@@ -152,7 +155,7 @@ class NodeManager:
     def node_failure_callback(self, node_id, left=False):
         logging.debug("Node manager callback function!")
         if left:
-            logging.debug("Node "+str(node_id)+"has left")
+            logging.debug("Node "+str(node_id)+" has left")
         else:
             logging.debug("Failing node: "+str(node_id))
         if self.sdfs_init:
@@ -163,6 +166,37 @@ class NodeManager:
             elif node_id == self.slave_manager.master_host:
                 logging.debug("Master failed!")
                 # TODO == call slave function to elect new master
+                self.elect_new_master()
         else:
             logging.debug("[Node manager] SDFS not initialized, no need to handle failure")
+        return
+
+    def master_backup_callback(self, node_table, file_table):
+        ret_msg = "Backup Failed!"
+        if not node_table or not file_table:
+            logging.warning("Node table and/or file table not received!")
+        else:
+            self.backup_filetable = file_table
+            self.backup_nodetable = node_table
+            ret_msg = "Backup Successful!"
+        logging.debug("Received node table: "+str(node_table))
+        logging.debug("Received file table: "+str(file_table))
+        return ret_msg
+
+    def elect_new_master(self):
+        logging.debug("Starting process to elect the new master...")
+        new_master_id = self.mem_list.get_most_recent_node()
+        if not new_master_id:
+            logging.error("Failed to find new master!")
+        new_master_ip = new_master_id.split(":")[0]
+        if new_master_ip == self.slave_manager.master_host:
+            self.slave_manager.stop_slave()
+            self.slave_manager = None
+            self.is_slave = False
+            self.master_manager = MasterNode(self.mem_list.get_alive_nodes_ip_not_me(), socket.gethostname(),
+                                             self.backup_filetable, self.backup_nodetable)
+            self.master_manager.start_master()
+            logging.info("Changed from slave to Master")
+        else:
+            self.slave_manager.update_new_master(new_master_ip)
         return

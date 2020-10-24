@@ -19,8 +19,7 @@ class SlaveNode():
         self.tcp_socket = None
         self.udp_socket = None
         self.qman_socket = None
-        self.new_ls = False
-        self.ls_files = []
+        self.master_backup_callback = None
 
     def start_slave(self):
         tcp_thread = threading.Thread(target=self.listener_thread_TCP)
@@ -40,6 +39,9 @@ class SlaveNode():
         self.qman_socket.close()
         logging.info("Stopping slave sockets")
 
+    def update_new_master(self, new_master_host):
+        self.master_host = new_master_host
+
     def send_ls_to_master(self, filename):
         ls_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         ls_sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
@@ -48,6 +50,9 @@ class SlaveNode():
         message_data = json.dumps(request).encode()
         self.qman_socket.sendto(message_data, (self.master_host, QMANAGER_PORT))
         logging.debug("ls successfully queued")
+
+    def set_callback(self, func):
+        self.master_backup_callback = func
 
     def send_write_request(self, localfilename, sdfsfilename):
         """
@@ -127,7 +132,6 @@ class SlaveNode():
         except FileNotFoundError:
             logging.info(f"File {sdfsfilename} does not exist")
             return
-
 
         for request_node in request_nodes:
             tcp_socket_send = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -223,3 +227,6 @@ class SlaveNode():
                 logging.info("Found the file "+request_json['filename']+" at nodes:")
                 for file in file_list:
                     logging.info(file)
+            elif request_json['op'] == 'backup_master':
+                ret = self.master_backup_callback(request_json['nodetable'], request_json['filetable'])
+                logging.debug(ret)

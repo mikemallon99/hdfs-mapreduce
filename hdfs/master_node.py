@@ -12,9 +12,13 @@ ack_available = threading.Event()
 
 
 class MasterNode:
-    def __init__(self, nodes, node_ip):
-        self.nodetable = {}
-        self.filetable = {}
+    def __init__(self, nodes, node_ip, ftable=None, ntable=None):
+        if ntable is None:
+            ntable = {}
+        if ftable is None:
+            ftable = {}
+        self.nodetable = ftable
+        self.filetable = ntable
         self.acktable = {}
         self.op_queue = []
         self.queue_lock = threading.Lock()
@@ -248,6 +252,7 @@ class MasterNode:
             valid = self.validate_acks(request_nodes)
 
         # TODO: Send out node/file tables somewhere
+        self.send_backup_information()
 
         logging.info("All ACKs recieved, write successful")
 
@@ -323,6 +328,20 @@ class MasterNode:
                 break
 
         return valid
+
+    def send_backup_information(self, sock):
+        message = {}
+        message['op'] = 'backup_master'
+        message['filetable'] = self.filetable
+        message['nodetable'] = self.nodetable
+        message_data = json.dumps(message).encode()
+        for node in self.nodetable.keys():
+            if node == self.node_ip:
+                logging.debug("Skipping dissemination to master")
+                continue
+            sock.sendto(message_data, (node, QHANDLER_PORT))
+        logging.debug("Master backup info sent!")
+        return
 
 
 def recv_ack_thread(sock):
