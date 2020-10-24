@@ -66,7 +66,7 @@ class MasterNode:
             request = {}
             request['op'] = 'write'
             request['sender_host'] = self.node_ip  # TODO == why need both?
-            request['addr'] = self.filetable[file][0]
+            request['addr'] = [self.filetable[file][0]]
             request['filename'] = file
             request['localfilename'] = file
 
