@@ -12,13 +12,9 @@ ack_available = threading.Event()
 
 
 class MasterNode:
-    def __init__(self, nodes, node_ip, ftable=None, ntable=None):
-        if ntable is None:
-            ntable = {}
-        if ftable is None:
-            ftable = {}
-        self.nodetable = ftable
-        self.filetable = ntable
+    def __init__(self, nodes, node_ip):
+        self.nodetable = {}
+        self.filetable = {}
         self.acktable = {}
         self.op_queue = []
         self.queue_lock = threading.Lock()
@@ -33,6 +29,31 @@ class MasterNode:
         for node in nodes:
             self.nodetable[node] = []
             self.acktable[node] = 0
+
+    def set_filenode_tables(self, ftable, ntable):
+        """
+        Generate the masternodes filetable from an input
+        """
+        self.filetable = ftable
+        self.nodetable = ntable
+
+        # Remove self from nodetable and from all filetable entries
+        node_files = self.nodetable.pop(self.node_ip, [])
+        for file in node_files:
+            try:
+                self.filetable[file].remove(node)
+            except ValueError:
+                logging.error("Value error")
+                continue
+            # Add write to queue
+            request = {}
+            request['op'] = 'write'
+            request['sender_host'] = self.node_ip  # TODO == why need both?
+            request['addr'] = [self.filetable[file][0]]
+            request['filename'] = file
+            request['localfilename'] = file
+
+            self.enqueue_write_front(request)
 
     def start_master(self):
         queue_manager = threading.Thread(target=self.queue_manager_thread)
@@ -418,7 +439,7 @@ class MasterNode:
         message_data = json.dumps(message).encode()
         for node in self.nodetable.keys():
             if node == self.node_ip:
-                logging.debug("Skipping dissemination to master")
+                #logging.debug("Skipping dissemination to master")
                 continue
             sock.sendto(message_data, (node, QHANDLER_PORT))
         logging.debug("Master backup info sent!")

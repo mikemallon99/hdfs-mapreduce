@@ -239,11 +239,15 @@ class SlaveNode():
         self.tcp_socket.listen(8)
 
         while True:
-            c, addr = self.tcp_socket.accept()
-            logging.info(f"Recieved TCP connection from {addr}")
-            # Handle recieiving files here
-            file_transfer_thread = threading.Thread(target=self.handle_file_transfer, args=(c,))
-            file_transfer_thread.start()
+            try:
+                c, addr = self.tcp_socket.accept()
+                logging.info(f"Recieved TCP connection from {addr}")
+                # Handle recieiving files here
+                file_transfer_thread = threading.Thread(target=self.handle_file_transfer, args=(c,))
+                file_transfer_thread.start()
+            except OSError:
+                logging.debug("Recieved message but socket is closed")
+                break
 
     def listener_thread_UDP(self):
         """

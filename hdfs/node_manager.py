@@ -199,8 +199,8 @@ class NodeManager:
             self.slave_manager.stop_slave()
             self.slave_manager = None
             self.is_slave = False
-            self.master_manager = MasterNode(self.mem_list.get_alive_nodes_ip_not_me(), socket.gethostname(),
-                                             self.backup_filetable, self.backup_nodetable)
+            self.master_manager = MasterNode(self.mem_list.get_alive_nodes_ip_not_me(), socket.gethostname())
+            self.master_manager.set_filenode_tables(self.backup_filetable, self.backup_nodetable)
             self.master_manager.start_master()
             logging.info("Changed from slave to Master")
         else:
