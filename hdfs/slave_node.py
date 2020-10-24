@@ -277,7 +277,7 @@ class SlaveNode():
                 if not file_list:
                     logging.info("File not found in SDFS!")
                     continue
-                logging.info("Found the file "+request_json['filename']+" at nodes:")
+                logging.info("Found the file at nodes:")
                 for file in file_list:
                     logging.info(file)
             elif request_json['op'] == 'backup_master':
