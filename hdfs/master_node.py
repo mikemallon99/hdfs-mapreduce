@@ -202,13 +202,14 @@ class MasterNode:
         # First, check if the file is in the network
         sortednodetable = sorted(self.nodetable, key=lambda key: len(self.nodetable[key]))
         if filename in self.filetable.keys():
-            file_nodes = self.filetable.get(filename)
+            file_nodes = self.filetable.get(filename).copy()
             # Then, see if there are 4 replicas
             while len(file_nodes) < 4 and len(file_nodes) < len(self.nodetable.keys()) - len(request_nodes):
                 # Find the node with the most space that doesnt have the file
                 for node in sortednodetable:
                     if node not in self.filetable[filename] and node not in request_nodes:
                         # Add file to tables
+                        file_nodes.append(node)
                         self.filetable[filename].append(node)
                         self.nodetable[node].append(filename)
                         break
@@ -221,6 +222,7 @@ class MasterNode:
             counter = 0
             for node in sortednodetable:
                 if node not in request_nodes:
+                    file_nodes.append(node)
                     self.nodetable[node].append(filename)
                     self.filetable[filename].append(node)
                     counter += 1
