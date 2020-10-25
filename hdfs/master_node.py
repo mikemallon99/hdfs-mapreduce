@@ -352,7 +352,7 @@ class MasterNode:
         # Wait for the acknowledgement message
         valid = False
         while not valid:
-            valid = self.validate_acks(request_nodes)
+            valid = self.validate_acks(file_nodes)
 
         # TODO: Send out node/file tables somewhere
         self.send_backup_information(sock)
