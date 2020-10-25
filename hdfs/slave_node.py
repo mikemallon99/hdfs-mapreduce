@@ -273,13 +273,6 @@ class SlaveNode():
             elif request_json['op'] == 'store':
                 ls_thread = threading.Thread(target=self.handle_store_response, args=(request_json,))
                 ls_thread.start()
-                file_list = request_json['filelist']
-                if not file_list:
-                    logging.info("File not found in SDFS!")
-                    continue
-                logging.info("Found the file at nodes:")
-                for file in file_list:
-                    logging.info(file)
             elif request_json['op'] == 'backup_master':
                 ret = self.master_backup_callback(request_json['nodetable'], request_json['filetable'])
                 logging.debug(ret)
