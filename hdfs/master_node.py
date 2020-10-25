@@ -409,6 +409,7 @@ class MasterNode:
 
         # Wait for the acknowledgement message
         nodes = request_nodes.copy()
+        start_time = datetime.now()
         counts = 0
         while not (len(nodes) == 0 or counts >= 3):
             nodes = self.validate_acks(request_nodes)
