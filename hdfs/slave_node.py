@@ -276,3 +276,5 @@ class SlaveNode():
             elif request_json['op'] == 'backup_master':
                 ret = self.master_backup_callback(request_json['nodetable'], request_json['filetable'])
                 logging.debug(ret)
+            elif request_json['op'] == 'failure':
+                logging.info("File does not exist in SDFS")

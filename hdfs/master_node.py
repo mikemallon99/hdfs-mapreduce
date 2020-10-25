@@ -392,7 +392,13 @@ class MasterNode:
         if file_node is None:
             # Inform machines that the file does not exist
             # TODO: Implement this
-            pass
+            logging.info(f"Sending non-exist message to {request_nodes[0]}")
+            response = dict.copy(request)
+            response['sender_host'] = self.node_ip
+            response['op'] = 'failure'
+            message_data = json.dumps(response).encode()
+            sock.sendto(message_data, (request_nodes[0], QHANDLER_PORT))
+            return
 
         # Increment ack table for requesting nodes
         for node in request_nodes:
