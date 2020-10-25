@@ -69,6 +69,9 @@ class NodeManager:
             elif command == "get":
                 self.slave_manager.send_read_request(localfilename=arguments[1], sdfsfilename=arguments[0])
             elif command == "ls":
+                if not arguments:
+                    logging.warning("Need argument for ls command (i.e. the name of the file)")
+                    return
                 if self.is_slave:
                     self.slave_manager.send_ls_to_master(arguments[0])
                 else:
