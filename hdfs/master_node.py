@@ -2,6 +2,7 @@ import threading
 import logging
 import socket
 import json
+from datetime import datetime
 from typing import Optional, Dict
 
 QMANAGER_PORT = 12345
@@ -213,7 +214,8 @@ class MasterNode:
             request_json = parse_and_validate_message(data)
 
             if request_json['op'] == 'ack':
-                self.decrement_ack(request_json['sender_host'])
+                decrement_ack_thread = threading.Thread(target=self.decrement_ack, args=(request_json['sender_host'],))
+                decrement_ack_thread.start()
 
     def decrement_ack(self, node):
         """
@@ -311,10 +313,10 @@ class MasterNode:
         if filename in self.filetable.keys():
             file_nodes = self.filetable.get(filename).copy()
             # Then, see if there are 4 replicas
-            while len(file_nodes) < 4 and len(file_nodes) < len(self.nodetable.keys()) - len(request_nodes):
+            while len(file_nodes) < 4 and len(file_nodes) < len(self.nodetable.keys()):
                 # Find the node with the most space that doesnt have the file
                 for node in sortednodetable:
-                    if node not in self.filetable[filename] and node not in request_nodes:
+                    if node not in self.filetable[filename]:
                         # Add file to tables
                         file_nodes.append(node)
                         self.filetable[filename].append(node)
@@ -350,9 +352,21 @@ class MasterNode:
         sock.sendto(message_data, (request_nodes[0], QHANDLER_PORT))
 
         # Wait for the acknowledgement message
-        valid = False
-        while not valid:
-            valid = self.validate_acks(file_nodes)
+        start_time = datetime.now()
+        nodes = file_nodes.copy()
+        counts = 0
+        while not (len(nodes) == 0 or counts >= 3):
+            nodes = self.validate_acks(file_nodes)
+            if (datetime.now() - start_time).total_seconds() > 5:
+                # redo sends
+                logging.info(f"Trying again")
+                sock.sendto(message_data, (request_nodes[0], QHANDLER_PORT))
+                start_time = datetime.now()
+                counts += 1
+                if counts == 3:
+                    logging.info("Write failed")
+
+
 
         # TODO: Send out node/file tables somewhere
         self.send_backup_information(sock)
@@ -394,9 +408,18 @@ class MasterNode:
         sock.sendto(message_data, (file_node, QHANDLER_PORT))
 
         # Wait for the acknowledgement message
-        valid = False
-        while not valid:
-            valid = self.validate_acks(request_nodes)
+        nodes = request_nodes.copy()
+        counts = 0
+        while not (len(nodes) == 0 or counts >= 3):
+            nodes = self.validate_acks(request_nodes)
+            if (datetime.now() - start_time).total_seconds() > 5:
+                # redo sends
+                logging.info(f"Trying again")
+                sock.sendto(message_data, (file_node, QHANDLER_PORT))
+                start_time = datetime.now()
+                counts += 1
+                if counts == 3:
+                    logging.info("Read failed")
 
         logging.info("All ACKs recieved, read successful")
 
@@ -416,20 +439,22 @@ class MasterNode:
         Check to make sure we can stop waiting for nodes.
         Valid if a machine is failed or if all acks are recieved
         """
-        valid = True
+        ack_nodes = []
         for node in nodes:
             # Keep waiting if there are still needed acks
             self.ack_lock.acquire()
             node_acks = self.acktable[node]
             self.ack_lock.release()
             if node_acks > 0:
-                valid = False
+                ack_nodes.append(node)
             if node not in self.nodetable.keys():
-                valid = True
+                self.ack_lock.acquire()
+                self.ack_table[node] = 0
+                self.ack_lock.release()
                 logging.info(f"Node {node} not detected in node table")
                 break
 
-        return valid
+        return ack_nodes
 
     def send_backup_information(self, sock):
         message = {}
