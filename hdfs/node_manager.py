@@ -8,7 +8,7 @@ import threading
 import os, time
 
 fd_cmds = ["join", "list", "id", "leave", "fail"]
-dfs_cmds = ["start_sdfs", "master", "put", "get", "delete", "ls", "store"]
+dfs_cmds = ["start_sdfs", "master", "put", "get", "delete", "ls", "store", "write_test"]
 
 # TODO == need to input nodes as just the hostname, not the hostname+time+port
 
