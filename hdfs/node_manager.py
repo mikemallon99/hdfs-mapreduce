@@ -216,5 +216,6 @@ class NodeManager:
 
     def run_write_tests(self):
         for i in range(0,10):
-            os.system(f"dd if=/dev/urandom of=hdfs_files/filename{i} bs=$((1024*1024)) count={str(1+i*100)}")
-            self.slave_manager.send_write_request(localfilename=f"filename{i}", sdfsfilename=f"file{i}")
+            for j in range(0,5):
+                os.system(f"dd if=/dev/urandom of=hdfs_files/filename{i} bs=$((1024*1024)) count={str(1+i*100)}")
+                self.slave_manager.send_write_request(localfilename=f"filename{i}", sdfsfilename=f"file{i}")

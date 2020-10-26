@@ -306,6 +306,7 @@ class MasterNode:
         # Find a machine that has space for the file
         request_nodes = request['addr']
         filename = request['filename']
+        request['timestamp'] = datetime.now().isoformat()
         file_nodes = []
 
         # First, check if the file is in the network
