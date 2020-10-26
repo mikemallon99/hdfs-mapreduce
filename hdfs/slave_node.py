@@ -33,7 +33,7 @@ class SlaveNode():
         self.qman_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.qman_socket.bind((self.self_host, QMANAGER_PORT))
 
-        self.f = open("read_times.txt", "a")
+        # self.f = open("read_times.txt", "a")
 
         logging.info("Started slave listeners")
 
@@ -41,7 +41,7 @@ class SlaveNode():
         self.tcp_socket.close()
         self.udp_socket.close()
         self.qman_socket.close()
-        self.f.close()
+        # self.f.close()
         logging.info("Stopping slave sockets")
 
     def update_new_master(self, new_master_host):
@@ -218,7 +218,7 @@ class SlaveNode():
         logging.info(f"Download time: {time_delta}")
 
         # Delete this after
-        self.f.write(f"{time_delta}\n")
+        # self.f.write(f"{time_delta}\n")
 
     def handle_store_response(self, request):
         file_list = request['filelist']
