@@ -315,7 +315,7 @@ class MasterNode:
         if filename in self.filetable.keys():
             file_nodes = self.filetable.get(filename).copy()
             # Then, see if there are 4 replicas
-            while len(file_nodes) < 4 and len(file_nodes) < len(self.nodetable.keys()):
+            while len(file_nodes) < 8 and len(file_nodes) < len(self.nodetable.keys()):
                 # Find the node with the most space that doesnt have the file
                 for node in sortednodetable:
                     if node not in self.filetable[filename]:
@@ -337,7 +337,8 @@ class MasterNode:
                     self.nodetable[node].append(filename)
                     self.filetable[filename].append(node)
                     counter += 1
-                if counter >= 4:
+                # Change this back to 4
+                if counter >= 8:
                     break
 
         # Add each write node to the ack table
