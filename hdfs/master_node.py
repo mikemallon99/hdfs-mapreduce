@@ -358,7 +358,7 @@ class MasterNode:
         start_time = datetime.now()
         nodes = file_nodes.copy()
         counts = 0
-        while not (len(nodes) == 0 or counts >= 3):
+        while not (len(nodes) == 0 or counts >= 3) and request_nodes[0] in self.nodetable.keys():
             nodes = self.validate_acks(file_nodes)
             if (datetime.now() - start_time).total_seconds() > 120:
                 # redo sends
