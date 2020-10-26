@@ -33,7 +33,7 @@ class SlaveNode():
         self.qman_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.qman_socket.bind((self.self_host, QMANAGER_PORT))
 
-        self.f = open("readtimes.txt", "a")
+        self.f = open("write_times.txt", "a")
 
         logging.info("Started slave listeners")
 
@@ -142,7 +142,7 @@ class SlaveNode():
         logging.info(f"Upload time: {time_delta}")
 
         # Delete this after
-        # self.f.write(f"{time_delta}\n")
+        self.f.write(f"{time_delta}\n")
 
     def send_read_request(self, localfilename, sdfsfilename):
         """
@@ -188,13 +188,13 @@ class SlaveNode():
 
         logging.info(f"Successfully sent file: {sdfsfilename} to node: {request_nodes}")
 
-        og_time = request['timestamp']
-        date_time_obj = datetime.strptime(og_time, '%Y-%m-%dT%H:%M:%S.%f')
-        time_delta = datetime.now() - date_time_obj
-        logging.info(f"Upload time: {time_delta}")
-
-        # Delete this after
-        self.f.write(f"{time_delta}\n")
+        # og_time = request['timestamp']
+        # date_time_obj = datetime.strptime(og_time, '%Y-%m-%dT%H:%M:%S.%f')
+        # time_delta = datetime.now() - date_time_obj
+        # logging.info(f"Upload time: {time_delta}")
+        #
+        # # Delete this after
+        # self.f.write(f"{time_delta}\n")
 
 
     def handle_file_transfer(self, c):
