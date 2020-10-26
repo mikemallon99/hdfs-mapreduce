@@ -32,12 +32,15 @@ class SlaveNode():
         self.qman_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.qman_socket.bind((self.self_host, QMANAGER_PORT))
 
+        self.f = open("writetimes.txt", "a")
+
         logging.info("Started slave listeners")
 
     def stop_slave(self):
         self.tcp_socket.close()
         self.udp_socket.close()
         self.qman_socket.close()
+        self.f.close()
         logging.info("Stopping slave sockets")
 
     def update_new_master(self, new_master_host):
@@ -135,7 +138,10 @@ class SlaveNode():
         og_time = request['timestamp']
         date_time_obj = datetime.strptime(og_time, '%Y-%m-%dT%H:%M:%S.%f')
         time_delta = datetime.now() - date_time_obj
-        logging.debug(f"Upload time: {time_delta}")
+        logging.info(f"Upload time: {time_delta}")
+
+        # Delete this after
+        f.write(f"{time_delta}\n")
 
     def send_read_request(self, localfilename, sdfsfilename):
         """

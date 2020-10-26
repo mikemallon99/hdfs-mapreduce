@@ -5,7 +5,7 @@ import socket
 import logging
 import json
 import threading
-import os
+import os, time
 
 fd_cmds = ["join", "list", "id", "leave", "fail"]
 dfs_cmds = ["start_sdfs", "master", "put", "get", "delete", "ls", "store"]
@@ -81,6 +81,8 @@ class NodeManager:
                 self.slave_manager.send_delete_request(sdfsfilename=arguments[0])
             elif command == "store":
                 self.slave_manager.send_store_request()
+            elif command == "write_test":
+                self.run_write_tests()
         else:
             logging.warning("Unknown command entered\n")
 
@@ -211,3 +213,8 @@ class NodeManager:
         else:
             self.slave_manager.update_new_master(new_master_ip)
         return
+
+    def run_write_tests(self):
+        for i in range(0,10):
+            os.system(f"dd if=/dev/urandom of=hdfs_files/filename{i} bs=$((1024*1024)) count={str(1+i*100)}")
+            self.slave_manager.send_write_request(localfilename=f"filename{i}", sdfsfilename=f"file{i}")
