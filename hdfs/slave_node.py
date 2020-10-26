@@ -133,7 +133,7 @@ class SlaveNode():
 
         logging.info(f"Successfully wrote file: {localfilename} to nodes: {target_nodes}")
         og_time = request['timestamp']
-        date_time_obj = datetime.datetime.strptime(og_time, '%Y-%m-%dT%H:%M:%S.%f')
+        date_time_obj = datetime.strptime(og_time, '%Y-%m-%dT%H:%M:%S.%f')
         time_delta = datetime.now() - date_time_obj
         logging.debug(f"Upload time: {time_delta}")
 
