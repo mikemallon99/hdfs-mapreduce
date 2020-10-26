@@ -384,6 +384,7 @@ class MasterNode:
         # Find a machine holding the file
         request_nodes = request['addr']
         filename = request['filename']
+        request['timestamp'] = datetime.now().isoformat()
         file_node = None
 
         if filename in self.filetable.keys():

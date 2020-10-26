@@ -83,6 +83,8 @@ class NodeManager:
                 self.slave_manager.send_store_request()
             elif command == "write_test":
                 self.run_write_tests()
+            elif command == "read_test":
+                self.run_read_tests()
         else:
             logging.warning("Unknown command entered\n")
 
@@ -216,6 +218,12 @@ class NodeManager:
 
     def run_write_tests(self):
         for i in range(0,10):
+            # for j in range(0,5):
+            os.system(f"dd if=/dev/urandom of=hdfs_files/filename{i} bs=$((1024*1024)) count={str(1+i*100)}")
+            self.slave_manager.send_write_request(localfilename=f"filename{i}", sdfsfilename=f"file{i}")
+
+    def run_write_tests(self):
+        for i in range(0,10):
             for j in range(0,5):
-                os.system(f"dd if=/dev/urandom of=hdfs_files/filename{i} bs=$((1024*1024)) count={str(1+i*100)}")
-                self.slave_manager.send_write_request(localfilename=f"filename{i}", sdfsfilename=f"file{i}")
+                # os.system(f"dd if=/dev/urandom of=hdfs_files/filename{i} bs=$((1024*1024)) count={str(1+i*100)}")
+                self.slave_manager.send_read_request(localfilename=f"filename{i}", sdfsfilename=f"file{i}")
