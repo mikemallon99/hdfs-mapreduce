@@ -5,6 +5,7 @@ import socket
 import logging
 import json
 import threading
+import os
 
 fd_cmds = ["join", "list", "id", "leave", "fail"]
 dfs_cmds = ["start_sdfs", "master", "put", "get", "delete", "ls", "store"]

@@ -1,4 +1,5 @@
 from .master_node import parse_and_validate_message
+from datetime import datetime
 import json
 import logging
 import socket
@@ -90,6 +91,7 @@ class SlaveNode():
         request['addr'] = [self.self_host]
         request['filename'] = sdfsfilename
         request['localfilename'] = localfilename
+        request['timestamp'] = datetime.now()
 
         try:
             filesize = os.path.getsize("hdfs_files/" + localfilename)
@@ -130,6 +132,10 @@ class SlaveNode():
             tcp_socket_send.close()
 
         logging.info(f"Successfully wrote file: {localfilename} to nodes: {target_nodes}")
+        og_time = request['timestamp']
+        date_time_obj = datetime.datetime.strptime(og_time, '%Y-%m-%d %H:%M:%S.%f')
+        time_delta = datetime.now() - date_time_obj
+        logging.debug(f"Upload time: {time_delta}")
 
     def send_read_request(self, localfilename, sdfsfilename):
         """
@@ -248,6 +254,7 @@ class SlaveNode():
             except OSError:
                 logging.debug("Recieved message but socket is closed")
                 break
+
 
     def listener_thread_UDP(self):
         """
