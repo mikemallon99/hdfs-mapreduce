@@ -21,6 +21,7 @@ class SlaveNode():
         self.udp_socket = None
         self.qman_socket = None
         self.master_backup_callback = None
+        self.ack_counter = 0
 
     def start_slave(self):
         tcp_thread = threading.Thread(target=self.listener_thread_TCP)

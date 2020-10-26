@@ -358,7 +358,7 @@ class MasterNode:
         counts = 0
         while not (len(nodes) == 0 or counts >= 3):
             nodes = self.validate_acks(file_nodes)
-            if (datetime.now() - start_time).total_seconds() > 5:
+            if (datetime.now() - start_time).total_seconds() > 120:
                 # redo sends
                 logging.info(f"Trying again")
                 sock.sendto(message_data, (request_nodes[0], QHANDLER_PORT))
@@ -420,7 +420,7 @@ class MasterNode:
         counts = 0
         while not (len(nodes) == 0 or counts >= 3):
             nodes = self.validate_acks(request_nodes)
-            if (datetime.now() - start_time).total_seconds() > 5:
+            if (datetime.now() - start_time).total_seconds() > 120:
                 # redo sends
                 logging.info(f"Trying again")
                 sock.sendto(message_data, (file_node, QHANDLER_PORT))
