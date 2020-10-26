@@ -141,7 +141,7 @@ class SlaveNode():
         logging.info(f"Upload time: {time_delta}")
 
         # Delete this after
-        f.write(f"{time_delta}\n")
+        self.f.write(f"{time_delta}\n")
 
     def send_read_request(self, localfilename, sdfsfilename):
         """
