@@ -112,7 +112,8 @@ class MasterNode:
                 self.op_queue.append(request)
                 break
             if entry['filename'] == request['filename'] and entry['op'] == 'read':
-                entry['addr'].append(request['addr'])
+                for addr in request['addr']:
+                    entry['addr'].append(addr)
                 add_flag = False
                 break
         # Otherwise pin it to the end of the queue

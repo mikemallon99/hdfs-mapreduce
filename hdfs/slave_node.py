@@ -188,14 +188,6 @@ class SlaveNode():
 
         logging.info(f"Successfully sent file: {sdfsfilename} to node: {request_nodes}")
 
-        # og_time = request['timestamp']
-        # date_time_obj = datetime.strptime(og_time, '%Y-%m-%dT%H:%M:%S.%f')
-        # time_delta = datetime.now() - date_time_obj
-        # logging.info(f"Upload time: {time_delta}")
-        #
-        # # Delete this after
-        # self.f.write(f"{time_delta}\n")
-
 
     def handle_file_transfer(self, c):
         """
@@ -208,6 +200,7 @@ class SlaveNode():
         filename = os.path.basename(filename)
         filesize = int(filesize)
 
+        timestamp1 = datetime.now()
         # Retrieve file
         with open("hdfs_files/"+filename, "wb") as f:
             while True:
@@ -220,6 +213,12 @@ class SlaveNode():
         # Send acknowledgement to the master node
         self.send_ack_message()
         logging.info(f"Write to {filename} complete")
+
+        time_delta = datetime.now() - timestamp1
+        logging.info(f"Download time: {time_delta}")
+
+        # Delete this after
+        self.f.write(f"{time_delta}\n")
 
     def handle_store_response(self, request):
         file_list = request['filelist']
