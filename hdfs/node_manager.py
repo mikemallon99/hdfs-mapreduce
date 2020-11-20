@@ -31,7 +31,7 @@ class NodeManager:
     def __init__(self):
         self.fd_manager = failure_detector
         self.mem_list = failure_detector.mem_list
-        self.maplejuice_worker = MapleJuiceWorker(self.fd_manager.get_id())
+        self.maplejuice_worker = None
         self.master_manager = None
         self.slave_manager = None
         self.is_slave = True
@@ -147,6 +147,7 @@ class NodeManager:
                         ack = {'Type': "ACK"}
                         connection.sendall(json_to_bytes(ack))
                         self.sdfs_init = True
+                        MapleJuiceWorker(self.fd_manager.get_id())
                         self.maplejuice_worker.start_worker()
             finally:
                 logging.debug("Socket closed")
@@ -166,8 +167,9 @@ class NodeManager:
 
         self.master_manager = MasterNode(nodes, socket.gethostname())
         self.master_manager.start_master()
-
+        
         # start maplejuice threads/sockets
+        MapleJuiceWorker(self.fd_manager.get_id())
         self.maplejuice_worker.start_worker()
         for node in node_dict:
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
