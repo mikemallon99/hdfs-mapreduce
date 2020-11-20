@@ -68,16 +68,15 @@ class NodeManager:
                 logging.warning("SDFS has not been initialized! \n"
                                 "Maplejuice command not executed...")
                 return
-            if command == "maple":
-                message_json = format_mj_msgs(command, arguments)
+            message_json = format_mj_msgs(command, arguments)
+            if message_json is None:
+                logging.info("Maplejuice command not executed...")
+            else:
                 if self.is_slave:
                     master_addr = self.slave_manager.master_host
                 else:
                     master_addr = socket.gethostname()
                 self.maplejuice_worker.send_maplejuice_msg(master_addr, message_json)
-            else:
-                # TODO == process command
-                print("juice cmd: ", arguments)
         elif command in dfs_cmds:
             if command == "start_sdfs":
                 if self.sdfs_init:
@@ -150,7 +149,7 @@ class NodeManager:
                         self.maplejuice_worker = MapleJuiceWorker(self.fd_manager.get_id())
                         self.maplejuice_worker.start_worker()
             finally:
-                logging.debug("Socket closed")
+                logging.debug("SDFS start socket closed")
                 connection.close()
 
     def send_sdfs_start(self):
