@@ -171,6 +171,7 @@ class NodeManager:
         # start maplejuice threads/sockets
         self.maplejuice_worker = MapleJuiceWorker(self.fd_manager.get_id())
         self.maplejuice_worker.start_worker()
+        logging.debug(node_dict)
         for node in node_dict:
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             address = (node.split(":")[0], START_PORT)
