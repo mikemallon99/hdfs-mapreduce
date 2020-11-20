@@ -7,8 +7,9 @@ import json
 import threading
 import os, time
 
-fd_cmds = ["join", "list", "id", "leave", "fail"]
 dfs_cmds = ["start_sdfs", "master", "put", "get", "delete", "ls", "store", "write_test", "read_test"]
+fd_cmds = ["join", "list", "id", "leave", "fail"]
+mj_cmds = ["maple", "juice"]
 
 # TODO == need to input nodes as just the hostname, not the hostname+time+port
 
@@ -54,8 +55,15 @@ class NodeManager:
     def process_input(self, command, arguments):
         if command in fd_cmds:
             if not arguments == []:
-                logging.warning("Extra arguments for command '"+command+"': "+str(arguments))
+                logging.warning("Extra arguments for command '" + command + "': " + str(arguments))
             self.fd_manager.handle_user_input(command)
+        elif command in mj_cmds:
+            if command == "maple":
+                # TODO == process command
+                print("maple cmd: ", arguments)
+            else:
+                # TODO == process command
+                print("juice cmd: ", arguments)
         elif command in dfs_cmds:
             if command == "start_sdfs":
                 if self.sdfs_init:
@@ -168,9 +176,9 @@ class NodeManager:
         logging.debug("Node manager callback function!")
         node_id = node_id.split(":")[0]
         if left:
-            logging.debug("Node "+str(node_id)+" has left")
+            logging.debug("Node " + str(node_id) + " has left")
         else:
-            logging.debug("Failing node: "+str(node_id))
+            logging.debug("Failing node: " + str(node_id))
         if self.sdfs_init:
             if not self.is_slave:
                 logging.debug(str(self.master_manager.nodetable))
@@ -192,8 +200,8 @@ class NodeManager:
             self.backup_filetable = file_table
             self.backup_nodetable = node_table
             ret_msg = "Backup Successful!"
-        logging.debug("Received node table: "+str(node_table))
-        logging.debug("Received file table: "+str(file_table))
+        logging.debug("Received node table: " + str(node_table))
+        logging.debug("Received file table: " + str(file_table))
         return ret_msg
 
     def elect_new_master(self):
@@ -217,15 +225,15 @@ class NodeManager:
         return
 
     def run_write_tests(self):
-        for i in range(0,10):
+        for i in range(0, 10):
             # for j in range(0,5):
-            os.system(f"dd if=/dev/urandom of=hdfs_files/filename{i} bs=$((1024*1024)) count={str(1+i*100)}")
+            os.system(f"dd if=/dev/urandom of=hdfs_files/filename{i} bs=$((1024*1024)) count={str(1 + i * 100)}")
             self.slave_manager.send_write_request(localfilename=f"filename{i}", sdfsfilename=f"file{i}")
             time.sleep(0.5)
 
     def run_read_tests(self):
-        for i in range(0,10):
-            for j in range(0,5):
+        for i in range(0, 10):
+            for j in range(0, 5):
                 # os.system(f"dd if=/dev/urandom of=hdfs_files/filename{i} bs=$((1024*1024)) count={str(1+i*100)}")
                 self.slave_manager.send_read_request(localfilename=f"filename{i}", sdfsfilename=f"file{i}")
                 time.sleep(0.5)

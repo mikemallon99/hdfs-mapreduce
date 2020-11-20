@@ -8,6 +8,7 @@ from typing import Optional, Dict
 MJ_MANAGER_PORT = 12444
 MJ_HANDLER_PORT = 12445
 
+
 class MapleJuiceMaster:
     def __init__(self, node_ip):
         self.acktable = {}
@@ -53,7 +54,7 @@ class MapleJuiceMaster:
                 self.enqueue_juice(request_json)
                 logging.info(f"Recieved juice request from {request_json['sender_host']}")
             else:
-                logging.info(f"Recieved a request from {request_json['sender_host']}
+                logging.info(f"Recieved a request from {request_json['sender_host']}")
 
 
 def parse_and_validate_message(byte_data: bytes) -> Optional[Dict]:
