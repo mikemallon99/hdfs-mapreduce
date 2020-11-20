@@ -76,7 +76,7 @@ class MapleJuiceMaster:
                 self.enqueue_juice(request_json)
                 logging.info(f"Recieved juice request from {request_json['sender_host']}")
             else:
-                logging.info(f"Recieved a request from {request_json['sender_host']}
+                logging.info(f"Recieved a request from {request_json['sender_host']}")
 
     def queue_handler_thread(self):
         """
@@ -203,6 +203,13 @@ class MapleJuiceMaster:
         self.acktable[node] += 1
         self.ack_lock.release()
 
+        # Double check to make sure node is alive
+        self.work_lock.acquire()
+        work_table_copy = self.work_table.copy()
+        self.work_lock.release()
+        if node not in work_table_copy.keys():
+            node = work_table_copy.keys()[0]
+
         message_data = json.dumps(response).encode()
         sock.sendto(message_data, (node, MJ_HANDLER_PORT))
 
@@ -273,6 +280,30 @@ class MapleJuiceMaster:
         if self.acktable[node] > 0:
             self.acktable[node] -= 1
         self.ack_lock.release()
+
+    def node_failure(self, node):
+        """
+        Check to see if the node is being used as the target node or if it has
+        any work scheduled to it and transfer to a different machine
+        """
+        logging.info(f"Removing {node} from work table")
+        # Get outstanding work
+        self.work_lock.acquire()
+        work = self.work_table.pop(node)
+        # Reallocate work to first node and send message
+        # TODO: do this better
+        new_node = self.work_table.keys()[0]
+        self.work_table[new_node] = self.work_table.get(new_node, []) + work
+        self.work_lock.release()
+
+        # Send work message to the new node
+        self.send_maple_message(new_node, work, self.mj_listener_sock)
+
+        # Check if this node is the target
+        if self.target_node == node:
+            self.target_node = new_node
+
+
 
 def parse_and_validate_message(byte_data: bytes) -> Optional[Dict]:
     """
