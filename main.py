@@ -12,6 +12,10 @@ node_manager = NodeManager()
 # TODO == Need to ensure that when a node joins the network, and sdfs is on, it will join as slave
 # TODO == Need to ensure that when a node leaves the newtwork, and sdfs is on, it will stop its sdfs
 
+dfs_cmds = ["start_sdfs", "master", "put", "get", "delete", "ls", "store", "write_test", "read_test"]
+fd_cmds = ["join", "list", "id", "leave", "fail"]
+mj_cmds = ["maple", "juice"]
+
 
 class CommandType(Enum):
     LIST = "list"
@@ -44,7 +48,6 @@ def cmd_thread():
             optional_args = []
             if len(split_args) > 1:
                 optional_args = split_args[1:]
-            # TODO == do something with return messages or not?
             node_manager.process_input(cmd, optional_args)
     except KeyboardInterrupt:
         node_manager.stop_threads()
@@ -71,7 +74,7 @@ def parse_args():
 
 
 if __name__ == '__main__':
-    logging.basicConfig(level=logging.INFO)
+    logging.basicConfig(level=logging.DEBUG)
     args = parse_args()
     if args.start is True:
         # start the introducer

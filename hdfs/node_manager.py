@@ -1,14 +1,16 @@
 from failuredetector import main as failure_detector
 from .master_node import MasterNode
 from .slave_node import SlaveNode
+from maplejuice.maplejuice_worker import MapleJuiceWorker
 import socket
 import logging
 import json
 import threading
 import os, time
 
-fd_cmds = ["join", "list", "id", "leave", "fail"]
 dfs_cmds = ["start_sdfs", "master", "put", "get", "delete", "ls", "store", "write_test", "read_test"]
+fd_cmds = ["join", "list", "id", "leave", "fail"]
+mj_cmds = ["maple", "juice"]
 
 # TODO == need to input nodes as just the hostname, not the hostname+time+port
 
@@ -29,6 +31,7 @@ class NodeManager:
     def __init__(self):
         self.fd_manager = failure_detector
         self.mem_list = failure_detector.mem_list
+        self.maplejuice_worker = None
         self.master_manager = None
         self.slave_manager = None
         self.is_slave = True
@@ -40,22 +43,40 @@ class NodeManager:
         if not thread_name:
             logging.error("Invalid thread!")
             return
+        requested_thread = None
         if thread_name == "wait_for_sdfs_start":
             requested_thread = threading.Thread(target=self.wait_for_sdfs_start)
-            requested_thread.start()
+        if requested_thread is None:
+            logging.error("Invalid thread!")
+        requested_thread.start()
 
     def stop_threads(self):
         if not self.is_slave:
             self.master_manager.stop_master()
         else:
             self.slave_manager.stop_slave()
+        self.maplejuice_worker.stop_worker()
         logging.info("Stopping all processes from KeyboardInterrupt")
 
     def process_input(self, command, arguments):
         if command in fd_cmds:
             if not arguments == []:
-                logging.warning("Extra arguments for command '"+command+"': "+str(arguments))
+                logging.warning("Extra arguments for command '" + command + "': " + str(arguments))
             self.fd_manager.handle_user_input(command)
+        elif command in mj_cmds:
+            if not self.sdfs_init:
+                logging.warning("SDFS has not been initialized! \n"
+                                "Maplejuice command not executed...")
+                return
+            message_json = format_mj_msgs(command, arguments)
+            if message_json is None:
+                logging.info("Maplejuice command not executed...")
+            else:
+                if self.is_slave:
+                    master_addr = self.slave_manager.master_host
+                else:
+                    master_addr = socket.gethostname()
+                self.maplejuice_worker.send_maplejuice_msg(master_addr, message_json)
         elif command in dfs_cmds:
             if command == "start_sdfs":
                 if self.sdfs_init:
@@ -125,8 +146,10 @@ class NodeManager:
                         ack = {'Type': "ACK"}
                         connection.sendall(json_to_bytes(ack))
                         self.sdfs_init = True
+                        self.maplejuice_worker = MapleJuiceWorker(self.fd_manager.get_id())
+                        self.maplejuice_worker.start_worker()
             finally:
-                logging.debug("Socket closed")
+                logging.debug("SDFS start socket closed")
                 connection.close()
 
     def send_sdfs_start(self):
@@ -143,6 +166,11 @@ class NodeManager:
 
         self.master_manager = MasterNode(nodes, socket.gethostname())
         self.master_manager.start_master()
+
+        # start maplejuice threads/sockets
+        self.maplejuice_worker = MapleJuiceWorker(self.fd_manager.get_id())
+        self.maplejuice_worker.start_worker()
+        logging.debug(node_dict)
         for node in node_dict:
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             address = (node.split(":")[0], START_PORT)
@@ -168,9 +196,9 @@ class NodeManager:
         logging.debug("Node manager callback function!")
         node_id = node_id.split(":")[0]
         if left:
-            logging.debug("Node "+str(node_id)+" has left")
+            logging.debug("Node " + str(node_id) + " has left")
         else:
-            logging.debug("Failing node: "+str(node_id))
+            logging.debug("Failing node: " + str(node_id))
         if self.sdfs_init:
             if not self.is_slave:
                 logging.debug(str(self.master_manager.nodetable))
@@ -192,8 +220,8 @@ class NodeManager:
             self.backup_filetable = file_table
             self.backup_nodetable = node_table
             ret_msg = "Backup Successful!"
-        logging.debug("Received node table: "+str(node_table))
-        logging.debug("Received file table: "+str(file_table))
+        logging.debug("Received node table: " + str(node_table))
+        logging.debug("Received file table: " + str(file_table))
         return ret_msg
 
     def elect_new_master(self):
@@ -217,15 +245,41 @@ class NodeManager:
         return
 
     def run_write_tests(self):
-        for i in range(0,10):
+        for i in range(0, 10):
             # for j in range(0,5):
-            os.system(f"dd if=/dev/urandom of=hdfs_files/filename{i} bs=$((1024*1024)) count={str(1+i*100)}")
+            os.system(f"dd if=/dev/urandom of=hdfs_files/filename{i} bs=$((1024*1024)) count={str(1 + i * 100)}")
             self.slave_manager.send_write_request(localfilename=f"filename{i}", sdfsfilename=f"file{i}")
             time.sleep(0.5)
 
     def run_read_tests(self):
-        for i in range(0,10):
-            for j in range(0,5):
+        for i in range(0, 10):
+            for j in range(0, 5):
                 # os.system(f"dd if=/dev/urandom of=hdfs_files/filename{i} bs=$((1024*1024)) count={str(1+i*100)}")
                 self.slave_manager.send_read_request(localfilename=f"filename{i}", sdfsfilename=f"file{i}")
                 time.sleep(0.5)
+
+
+def format_mj_msgs(m_type, cli_args):
+    req = {'type': m_type}
+
+    # format the maple request message
+    if m_type == "maple":
+        if len(cli_args) is not 4:
+            logging.warning("Invalid number of arguments for "+m_type+" command")
+            return None
+        req['maple_exe'] = cli_args[0]
+        req['num_maples'] = cli_args[1]
+        req['sdfs_intermediate_filename_prefix'] = cli_args[2]
+        req['sdfs_src_prefix'] = cli_args[3]
+    # format the juice request message
+    else:
+        if len(cli_args) is not 5:
+            logging.warning("Invalid number of arguments for " + m_type + " command")
+            return None
+        req['juice_exe'] = cli_args[0]
+        req['num_juices'] = cli_args[1]
+        req['sdfs_intermediate_filename_prefix'] = cli_args[2]
+        req['sdfs_dest_filename'] = cli_args[3]
+        req['delete_input'] = cli_args[4]
+
+    return req

@@ -8,6 +8,7 @@ from typing import Optional, Dict
 MJ_MANAGER_PORT = 12444
 MJ_HANDLER_PORT = 12445
 
+
 class MapleJuiceMaster:
     def __init__(self, node_ip, nodes):
         self.acktable = {}
@@ -70,7 +71,7 @@ class MapleJuiceMaster:
 
             # Enqueue the data
             if request_json['type'] == 'maple':
-                self.enqueue_maple(request_json)
+                # self.enqueue_maple(request_json)
                 logging.info(f"Recieved maple request from {request_json['sender_host']}")
             elif request_json['type'] == 'juice':
                 self.enqueue_juice(request_json)
