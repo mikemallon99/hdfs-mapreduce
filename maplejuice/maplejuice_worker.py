@@ -27,10 +27,7 @@ class MapleJuiceWorker:
         """
         logging.debug("MapleJuicer worker started!")
 
-        self.cmd_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        self.cmd_sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        self.cmd_sock.bind((socket.gethostname(), CMD_PORT))
-        cmd_listen_t = threading.Thread(target=self.cmd_listen_thread())
+        cmd_listen_t = threading.Thread(target=self.cmd_listen_thread)
         cmd_listen_t.start()
 
         self.mjman_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -49,6 +46,10 @@ class MapleJuiceWorker:
         """
         Listen for maplejuice messages, start a thread to handle the message type accordingly
         """
+
+        self.cmd_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        self.cmd_sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        self.cmd_sock.bind((socket.gethostname(), CMD_PORT))
 
         while True:
             data, address = self.cmd_sock.recvfrom(4096)
