@@ -20,6 +20,9 @@ class MapleJuiceMaster:
         self.work_table = {}
         self.work_lock = threading.Lock()
 
+        self.node_key_table = {}
+        self.node_key_table_lock = threading.Lock()
+
         self.cur_application = ''
         self.cur_prefix = ''
 
@@ -110,7 +113,7 @@ class MapleJuiceMaster:
         num_maples = request['num_maples']
         self.cur_prefix = request['file_prefix']
         sdfs_src_directory = request['sdfs_src_directory']
-        request_node = request['sender_host']
+        self.target_node = request['sender_host']
 
         # Search sdfs for the files
         file_list = []
@@ -126,22 +129,22 @@ class MapleJuiceMaster:
 
         # Increment ack table for requesting nodes
         self.ack_lock.acquire()
-        self.acktable[request_node] += 1
+        self.acktable[self.target_node] += 1
         self.ack_lock.release()
-        logging.info(f"Sending split data to {request_node}")
+        logging.info(f"Sending split data to {self.target_node}")
         message_data = json.dumps(response).encode()
-        sock.sendto(message_data, (request_node, MJ_HANDLER_PORT))
+        sock.sendto(message_data, (self.target_node, MJ_HANDLER_PORT))
 
         # Wait for the split acknowledgement message
         start_time = datetime.now()
         counts = 0
-        nodes = [request_node]
-        while not (len(nodes) == 0 or counts >= 3) and request_node in self.work_table.keys():
+        nodes = [self.target_node]
+        while not (len(nodes) == 0 or counts >= 3) and self.target_node in self.work_table.keys():
             nodes = self.validate_acks()
             if (datetime.now() - start_time).total_seconds() > 120:
                 # redo sends
                 logging.info(f"Trying again")
-                sock.sendto(message_data, (request_node, MJ_HANDLER_PORT))
+                sock.sendto(message_data, (self.target_node, MJ_HANDLER_PORT))
                 start_time = datetime.now()
                 counts += 1
                 if counts == 3:
@@ -149,17 +152,41 @@ class MapleJuiceMaster:
 
         # Once we have recieved the split, we can add the worker nodes to the work
         # table and inform them of the operations they must perform
+        self.node_key_table_lock.acquire()
+        self.node_key_table.clear()
+        self.node_key_table_lock.release()
+
         self.work_lock.acquire()
+        logging.info(f"Sending work data to {self.work_table}")
         for node in self.work_table.keys():
             self.send_maple_message(node, self.work_table[node], sock)
         self.work_lock.release()
 
         # After sending the messages, wait for all of the ack bits
-        start_time = datetime.now()
-        counts = 0
         while True:
             if self.validate_acks() == 0:
                 break
+
+        # Send a message back to the requester telling it to combine all the files
+        self.ack_lock.acquire()
+        self.acktable[self.target_node] += 1
+        self.ack_lock.release()
+
+        response = {}
+        response['sender_host'] = self.node_ip
+        response['type'] = 'map_combine'
+        response['combine_list'] = self.node_key_table
+
+        logging.info(f"Sending combine request to {self.target_node}")
+        message_data = json.dumps(response).encode()
+        sock.sendto(message_data, (self.target_node, MJ_HANDLER_PORT))
+
+        # Wait for the final ack indicating the files have been combined
+        while True:
+            if self.validate_acks() == 0:
+                break
+
+        logging.info(f"Combine ack received, maple request completed.")
 
     def send_maple_message(self, node, files, sock):
         """
@@ -206,8 +233,11 @@ class MapleJuiceMaster:
             request_json = parse_and_validate_message(data)
 
             if request_json['type'] == 'split_ack':
-                decrement_ack_thread = threading.Thread(target=self.decrement_ack, args=(request_json['sender_host'],))
-                decrement_ack_thread.start()
+                split_ack_thread = threading.Thread(target=self.split_ack, args=(request_json,))
+                split_ack_thread.start()
+            elif request_json['type'] == 'map_ack':
+                map_ack_thread = threading.Thread(target=self.map_ack, args=(request_json,))
+                map_ack_thread.start()
 
     def split_ack(self, request):
         """
@@ -217,6 +247,16 @@ class MapleJuiceMaster:
         for node in request['node_ips'].keys():
             self.work_table[node] = request['node_ips'][node]
         self.work_lock.release()
+        self.decrement_ack(request['sender_host'])
+
+    def map_ack(self, request):
+        """
+        Use this function to populate the node file table with the produced files
+        """
+        self.node_key_table_lock.acquire()
+        for key in request['key_list'].keys():
+            self.node_key_table[key] = self.node_key_table.get(key, []) + request['key_list']['key']
+        self.node_key_table_lock.release()
         self.decrement_ack(request['sender_host'])
 
     def reallocate_work(self, node):
