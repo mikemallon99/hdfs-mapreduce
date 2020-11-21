@@ -227,9 +227,7 @@ class MapleJuiceMaster:
         self.ack_lock.release()
 
         # Double check to make sure node is alive
-        self.work_lock.acquire()
         work_table_copy = self.work_table.copy()
-        self.work_lock.release()
         if node not in work_table_copy.keys():
             node = work_table_copy.keys()[0]
 
