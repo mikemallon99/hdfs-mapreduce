@@ -133,6 +133,7 @@ class MapleJuiceWorker:
         response = {}
         response['type'] = 'map_ack'
         response['key_list'] = key_files
+        response['file_list'] = file_list
         response['sender_host'] = self.node_id
         message_data = json.dumps(response).encode()
         self.cmd_sock.sendto(message_data, (master_node, MJ_HANDLER_PORT))

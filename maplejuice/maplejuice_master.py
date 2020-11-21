@@ -266,6 +266,9 @@ class MapleJuiceMaster:
             elif request_json['type'] == 'map_ack':
                 map_ack_thread = threading.Thread(target=self.map_ack, args=(request_json,))
                 map_ack_thread.start()
+            elif request_json['type'] == 'combine_ack':
+                combine_ack_thread = threading.Thread(target=self.decrement_ack, args=(request_json['sender_host']))
+                combine_ack_thread.start()
 
     def split_ack(self, request):
         """
@@ -285,6 +288,10 @@ class MapleJuiceMaster:
         for key in request['key_list'].keys():
             self.node_key_table[key] = self.node_key_table.get(key, []) + request['key_list']['key']
         self.node_key_table_lock.release()
+        self.work_lock.acquire()
+        for file in request['file_list']:
+            self.work_table[request['sender_host']].pop(file)
+        self.work_lock.release()
         self.decrement_ack(request['sender_host'])
 
     def reallocate_work(self, node):
