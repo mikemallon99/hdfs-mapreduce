@@ -296,8 +296,8 @@ def format_mj_msgs(m_type, cli_args):
             return None
         req['maple_exe'] = cli_args[0]
         req['num_maples'] = cli_args[1]
-        req['sdfs_intermediate_filename_prefix'] = cli_args[2]
-        req['sdfs_src_prefix'] = cli_args[3]
+        req['file_prefix'] = cli_args[2]
+        req['sdfs_src_directory'] = cli_args[3]
     # format the juice request message
     else:
         if len(cli_args) is not 5:
@@ -305,7 +305,7 @@ def format_mj_msgs(m_type, cli_args):
             return None
         req['juice_exe'] = cli_args[0]
         req['num_juices'] = cli_args[1]
-        req['sdfs_intermediate_filename_prefix'] = cli_args[2]
+        req['file_prefix'] = cli_args[2]
         req['sdfs_dest_filename'] = cli_args[3]
         req['delete_input'] = cli_args[4]
 
