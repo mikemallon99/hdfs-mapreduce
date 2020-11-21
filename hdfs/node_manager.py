@@ -309,4 +309,6 @@ def format_mj_msgs(m_type, cli_args):
         req['sdfs_dest_filename'] = cli_args[3]
         req['delete_input'] = cli_args[4]
 
+    req['sender_host'] = socket.gethostname()
+
     return req
