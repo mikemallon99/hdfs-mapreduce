@@ -267,7 +267,7 @@ class MapleJuiceMaster:
                 map_ack_thread = threading.Thread(target=self.map_ack, args=(request_json,))
                 map_ack_thread.start()
             elif request_json['type'] == 'combine_ack':
-                combine_ack_thread = threading.Thread(target=self.decrement_ack, args=(request_json['sender_host']))
+                combine_ack_thread = threading.Thread(target=self.decrement_ack, args=(request_json['sender_host'],))
                 combine_ack_thread.start()
 
     def split_ack(self, request):
