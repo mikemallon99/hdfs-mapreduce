@@ -157,7 +157,7 @@ class NodeManager:
                         node_dict = self.mem_list.get_alive_nodes_not_me(my_id=self.fd_manager.get_id())
                         for node in node_dict.keys():
                             nodes.append(node.split(":")[0])
-                        node.pop(message["sender_host"])
+                        nodes.pop(message["sender_host"])
                         self.maplejuice_worker = MapleJuiceWorker(self.fd_manager.get_id().split(":")[0], nodes)
                         self.maplejuice_worker.set_sdfs_write_callback(self.sdfs_write_callback)
                         self.maplejuice_worker.set_sdfs_read_callback(self.sdfs_read_callback)
