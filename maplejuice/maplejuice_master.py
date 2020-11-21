@@ -119,10 +119,10 @@ class MapleJuiceMaster:
                 # Handle the request
                 if request['type'] == 'maple':
                     logging.info(f"Handling maple request from {request['sender_host']}")
-                    self.handle_maple(request, self.list_sock)
+                    self.handle_maple(request, self.mj_listener_sock)
                 elif request['type'] == 'juice':
                     logging.info(f"Handling juice request from {request['sender_host']}")
-                    self.handle_juice(request, self.list_sock)
+                    self.handle_juice(request, self.mj_listener_sock)
 
     def handle_maple(self, request, sock):
         """
