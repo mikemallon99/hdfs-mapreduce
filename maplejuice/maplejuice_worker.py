@@ -115,6 +115,8 @@ def split_files_among_machines(file_list, machine_list):
     Each machine receives approximately the same number of blocks (i.e. input lines)
     The names of the blocks follow the convention of machineID_block_i, where i is an integer
     """
+    logging.debug(file_list)
+    logging.debug(machine_list)
 
     block_cnt = {}  # tracks the number of blocks assigned to a machine
     line_cnt = {}  # tracks the number of lines in the block file currently being constructed
@@ -124,36 +126,42 @@ def split_files_among_machines(file_list, machine_list):
     for machine in machine_list:
         block_cnt[machine] = 1
         line_cnt[machine] = 0
-        file_name = machine + "_block_" + str(block_cnt[machine])
-        cur_block[machine] = open(file_name, "a")
+        file_name = machine + "_block_" + str(block_cnt[machine])+".txt"
+        cur_block[machine] = open(file_name, "w")
         block_list[machine] = [file_name]
 
     idx = 0
     machine_cnt = len(machine_list)
-    for file in file_list:
-        with open(file, "r") as in_file:
-            line_list = in_file.read().splitlines()
-        for line in line_list:
-            cur_machine = machine_list[idx]
-            # insert the line into the current machines block
-            cur_block[cur_machine].write(line)
-            line_cnt[cur_machine] = line_cnt[cur_machine] + 1
-            # check if this block is full
-            if idx == (machine_cnt - 1) and line_cnt[cur_machine] > NUM_INPUT_LINES:
-                # close current block, create new one, and add to list
-                cur_block[cur_machine].close()
-                line_cnt[cur_machine] = 0
-                block_cnt[cur_machine] = block_cnt[cur_machine] + 1
-                new_file_name = cur_machine + "_block_" + str(block_cnt[cur_machine])
-                cur_block[cur_machine] = open(new_file_name, "a")
-                block_list[cur_machine].append(new_file_name)
+    for in_file in file_list:
+        logging.debug(in_file)
+        with open(in_file, "r") as fp:
+            line = fp.readline()
+            while line:
+                cur_machine = machine_list[idx]
+                # insert the line into the current machines block
+                cur_block[cur_machine].write(line)
+                line_cnt[cur_machine] = line_cnt[cur_machine] + 1
+                # check if this block is full
+                if line_cnt[cur_machine] > (NUM_INPUT_LINES-1):
+                    # close current block, create new one, and add to list
+                    cur_block[cur_machine].close()
+                    line_cnt[cur_machine] = 0
+                    block_cnt[cur_machine] = block_cnt[cur_machine] + 1
+                    new_file_name = cur_machine + "_block_" + str(block_cnt[cur_machine])+".txt"
+                    cur_block[cur_machine] = open(new_file_name, "w")
+                    block_list[cur_machine].append(new_file_name)
 
-            # move to next machine (idx+1%num_machines)
-            idx = idx + 1
-            idx = idx % machine_cnt
+                # move to next machine (idx+1%num_machines)
+                idx = idx + 1
+                idx = idx % machine_cnt
+                line = fp.readline()
 
     # now close all the open blocks that did not fill to NUM_INPUT_LINES
     for open_block in cur_block.values():
         open_block.close()
+
+    logging.debug(block_cnt)
+    logging.debug(line_cnt)
+    logging.debug(cur_block)
 
     return block_list
