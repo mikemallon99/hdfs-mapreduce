@@ -294,7 +294,7 @@ class MapleJuiceMaster:
         self.node_key_table_lock.release()
         self.work_lock.acquire()
         for file in request['file_list']:
-            self.work_table[request['sender_host']].pop(file)
+            self.work_table[request['sender_host']].remove(file)
         self.work_lock.release()
         self.decrement_ack(request['sender_host'])
 
