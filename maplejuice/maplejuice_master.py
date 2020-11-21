@@ -91,7 +91,7 @@ class MapleJuiceMaster:
 
             # Enqueue the data
             if request_json['type'] == 'maple':
-                # self.enqueue_maple(request_json)
+                self.enqueue_maple(request_json)
                 logging.info(f"Recieved maple request from {request_json['sender_host']}")
             elif request_json['type'] == 'juice':
                 self.enqueue_juice(request_json)
