@@ -311,7 +311,7 @@ class SlaveNode():
         self.udp_socket.bind((self.self_host, QHANDLER_PORT))
 
         while True:
-            data, address = self.udp_socket.recvfrom(4096)
+            data, address = self.udp_socket.recvfrom(65536)
             request_json = parse_and_validate_message(data)
 
             if request_json['op'] == 'read':
