@@ -15,12 +15,14 @@ MJ_HANDLER_PORT = 12445
 
 
 class MapleJuiceWorker:
-    def __init__(self, node_id):
+    def __init__(self, node_id, nodes):
         self.cmd_sock = None
         self.node_id = node_id
         self.fd_lock = threading.Lock()
         self.failed_node = None
         self.mjman_socket = None
+        self.nodes = nodes
+        self.nodes.append(self.node_id)
 
         self.sdfs_write_callback = None
         self.sdfs_read_callback = None
@@ -90,7 +92,7 @@ class MapleJuiceWorker:
         file_list = request_json['file_list']
 
         # Call split function here
-        split_file_dict = {}
+        split_file_dict = split_files_among_machines(file_list, self.nodes)
         # Add files to sdfs here
         for node in split_file_dict.keys():
             for file in split_file_dict[node]:

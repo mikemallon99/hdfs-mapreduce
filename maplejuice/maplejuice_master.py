@@ -216,6 +216,9 @@ class MapleJuiceMaster:
         Send a message to a worker telling it to process files
         Additionally, increment the ack table for that node
         """
+        if len(files) == 0:
+            return
+
         response = {}
         response['sender_host'] = self.node_ip
         response['type'] = 'maple'

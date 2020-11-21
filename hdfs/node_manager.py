@@ -152,7 +152,12 @@ class NodeManager:
                         ack = {'Type': "ACK"}
                         connection.sendall(json_to_bytes(ack))
                         self.sdfs_init = True
-                        self.maplejuice_worker = MapleJuiceWorker(self.fd_manager.get_id().split(":")[0])
+
+                        nodes = []
+                        node_dict = self.mem_list.get_alive_nodes_not_me(my_id=self.fd_manager.get_id())
+                        for node in node_dict.keys():
+                            nodes.append(node.split(":")[0])
+                        self.maplejuice_worker = MapleJuiceWorker(self.fd_manager.get_id().split(":")[0], nodes)
                         self.maplejuice_worker.set_sdfs_write_callback(self.sdfs_write_callback)
                         self.maplejuice_worker.set_sdfs_read_callback(self.sdfs_read_callback)
                         self.maplejuice_worker.start_worker()
