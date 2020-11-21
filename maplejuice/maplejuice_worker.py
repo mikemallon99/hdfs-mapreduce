@@ -68,7 +68,7 @@ class MapleJuiceWorker:
             elif cmd_type == "maple":
                 map_t = threading.Thread(target=self.handle_map_cmd, args=(request_json,))
                 map_t.start()
-            elif cmd_type == "combine":
+            elif cmd_type == "map_combine":
                 cmbn_t = threading.Thread(target=self.handle_cmbn_cmd, args=(request_json,))
                 cmbn_t.start()
             else:
