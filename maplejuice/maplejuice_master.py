@@ -206,7 +206,7 @@ class MapleJuiceMaster:
 
         # Wait for the final ack indicating the files have been combined
         while True:
-            if self.validate_acks() == 0:
+            if len(self.validate_acks()) == 0:
                 break
 
         logging.info(f"Combine ack received, maple request completed.")
