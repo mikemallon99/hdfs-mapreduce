@@ -160,8 +160,4 @@ def split_files_among_machines(file_list, machine_list):
     for open_block in cur_block.values():
         open_block.close()
 
-    logging.debug(block_cnt)
-    logging.debug(line_cnt)
-    logging.debug(cur_block)
-
     return block_list
