@@ -187,7 +187,7 @@ class MapleJuiceMaster:
 
         # After sending the messages, wait for all of the ack bits
         while True:
-            if self.validate_acks() == 0:
+            if len(self.validate_acks()) == 0:
                 break
 
         # Send a message back to the requester telling it to combine all the files
