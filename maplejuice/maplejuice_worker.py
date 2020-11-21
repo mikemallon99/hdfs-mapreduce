@@ -221,7 +221,7 @@ def split_files_among_machines(file_list, machine_list):
     machine_cnt = len(machine_list)
     for in_file in file_list:
         logging.debug(in_file)
-        with open(in_file, "r") as fp:
+        with open('hdfs_files/'+in_file, "r") as fp:
             line = fp.readline()
             while line:
                 cur_machine = machine_list[idx]
