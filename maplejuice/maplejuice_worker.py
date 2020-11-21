@@ -91,7 +91,7 @@ class MapleJuiceWorker:
         # Call split function here
         split_file_dict = {}
         # Add files to sdfs here
-        for node in split_file_dict.keys:
+        for node in split_file_dict.keys():
             for file in split_file_dict[node]:
                 self.sdfs_write_callback(file)
 
