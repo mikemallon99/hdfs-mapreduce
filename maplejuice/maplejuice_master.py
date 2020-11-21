@@ -284,6 +284,7 @@ class MapleJuiceMaster:
         """
         Use this function to populate the node file table with the produced files
         """
+        # The node key table maps a key to all the files associated with that key
         self.node_key_table_lock.acquire()
         for key in request['key_list'].keys():
             self.node_key_table[key] = self.node_key_table.get(key, []) + request['key_list']['key']
@@ -293,12 +294,6 @@ class MapleJuiceMaster:
             self.work_table[request['sender_host']].pop(file)
         self.work_lock.release()
         self.decrement_ack(request['sender_host'])
-
-    def reallocate_work(self, node):
-        """
-        Check to see if a failed node has any work scheduled onto it, and
-        fix the work table and ack table to compensate
-        """
 
     def decrement_ack(self, node):
         """
