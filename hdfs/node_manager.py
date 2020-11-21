@@ -153,6 +153,8 @@ class NodeManager:
                         connection.sendall(json_to_bytes(ack))
                         self.sdfs_init = True
                         self.maplejuice_worker = MapleJuiceWorker(self.fd_manager.get_id())
+                        self.maplejuice_worker.set_sdfs_write_callback(self.sdfs_write_callback)
+                        self.maplejuice_worker.set_sdfs_read_callback(self.sdfs_read_callback)
                         self.maplejuice_worker.start_worker()
             finally:
                 logging.debug("SDFS start socket closed")
@@ -176,6 +178,7 @@ class NodeManager:
 
         # start maplejuice threads/sockets
         self.maplejuice_master = MapleJuiceMaster(socket.gethostname(), nodes)
+        self.maplejuice_master.set_filetable_callback(self.get_filetable_callback())
         self.maplejuice_master.start_master()
 
         logging.debug(node_dict)
@@ -260,7 +263,7 @@ class NodeManager:
         while self.slave_manager.get_writes_queued() > 0:
             continue
 
-    def sdfs_write_callback(self, filename):
+    def sdfs_read_callback(self, filename):
         """
         Send a read request and do not terminate until the request is completed
         """
@@ -269,7 +272,7 @@ class NodeManager:
             continue
 
     def get_filetable_callback(self):
-        return
+        return self.master_manager.get_filetable()
 
     def run_write_tests(self):
         for i in range(0, 10):
