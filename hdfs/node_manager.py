@@ -178,7 +178,7 @@ class NodeManager:
 
         # start maplejuice threads/sockets
         self.maplejuice_master = MapleJuiceMaster(socket.gethostname(), nodes)
-        self.maplejuice_master.set_filetable_callback(self.get_filetable_callback())
+        self.maplejuice_master.set_filetable_callback(self.get_filetable_callback)
         self.maplejuice_master.start_master()
 
         logging.debug(node_dict)
