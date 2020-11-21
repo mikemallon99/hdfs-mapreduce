@@ -327,7 +327,6 @@ class MapleJuiceMaster:
             self.target_node = new_node
 
 
-
 def parse_and_validate_message(byte_data: bytes) -> Optional[Dict]:
     """
     Parse received byte data into json. Check if all required fields are present.

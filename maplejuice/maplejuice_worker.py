@@ -7,6 +7,7 @@ from typing import Optional, Dict
 from .maplejuice_master import parse_and_validate_message
 import threading
 
+NUM_INPUT_LINES = 25
 
 CMD_PORT = 12446
 MJ_MANAGER_PORT = 12444
@@ -72,7 +73,7 @@ class MapleJuiceWorker:
                 cmbn_t = threading.Thread(target=self.handle_cmbn_cmd, args=(request_json,))
                 cmbn_t.start()
             else:
-                logging.warning("MapleJuiceWorker received invalid message: "+str(request_json))
+                logging.warning("MapleJuiceWorker received invalid message: " + str(request_json))
 
     def set_sdfs_write_callback(self, func):
         self.sdfs_write_callback = func
@@ -188,5 +189,60 @@ class MapleJuiceWorker:
 
         msg_data = json.dumps(msg_json).encode()
         self.mjman_socket.sendto(msg_data, (master_addr, MJ_MANAGER_PORT))
-        logging.info(msg_json['type']+" command sent to master to be queued")
+        logging.info(msg_json['type'] + " command sent to master to be queued")
         return
+
+
+def split_files_among_machines(file_list, machine_list):
+    """
+    Takes a list of files and splits each into 25 line chunks, then assigns each
+    chunk to a file corresponding to a machine that will process this input block.
+    Each machine receives approximately the same number of blocks (i.e. input lines)
+    The names of the blocks follow the convention of machineID_block_i, where i is an integer
+    """
+    logging.debug(file_list)
+    logging.debug(machine_list)
+
+    block_cnt = {}  # tracks the number of blocks assigned to a machine
+    line_cnt = {}  # tracks the number of lines in the block file currently being constructed
+    cur_block = {}  # maps machine -> the file object associated with the current block being constructed
+    block_list = {}  # maps machine -> list of file block inputs assigned to this machine
+
+    for machine in machine_list:
+        block_cnt[machine] = 1
+        line_cnt[machine] = 0
+        file_name = machine + "_block_" + str(block_cnt[machine])+".txt"
+        cur_block[machine] = open(file_name, "w")
+        block_list[machine] = [file_name]
+
+    idx = 0
+    machine_cnt = len(machine_list)
+    for in_file in file_list:
+        logging.debug(in_file)
+        with open(in_file, "r") as fp:
+            line = fp.readline()
+            while line:
+                cur_machine = machine_list[idx]
+                # insert the line into the current machines block
+                cur_block[cur_machine].write(line)
+                line_cnt[cur_machine] = line_cnt[cur_machine] + 1
+                # check if this block is full
+                if line_cnt[cur_machine] > (NUM_INPUT_LINES-1):
+                    # close current block, create new one, and add to list
+                    cur_block[cur_machine].close()
+                    line_cnt[cur_machine] = 0
+                    block_cnt[cur_machine] = block_cnt[cur_machine] + 1
+                    new_file_name = cur_machine + "_block_" + str(block_cnt[cur_machine])+".txt"
+                    cur_block[cur_machine] = open(new_file_name, "w")
+                    block_list[cur_machine].append(new_file_name)
+
+                # move to next machine (idx+1%num_machines)
+                idx = idx + 1
+                idx = idx % machine_cnt
+                line = fp.readline()
+
+    # now close all the open blocks that did not fill to NUM_INPUT_LINES
+    for open_block in cur_block.values():
+        open_block.close()
+
+    return block_list
