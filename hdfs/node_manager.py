@@ -244,6 +244,22 @@ class NodeManager:
             self.slave_manager.update_new_master(new_master_ip)
         return
 
+    def sdfs_write_callback(self, filename):
+        """
+        Send a write request and do not terminate until the request is completed
+        """
+        self.slave_manager.send_write_request(filename, filename)
+        while self.slave_manager.get_writes_queued() > 0:
+            continue
+
+    def sdfs_write_callback(self, filename):
+        """
+        Send a read request and do not terminate until the request is completed
+        """
+        self.slave_manager.send_read_request(filename, filename)
+        while self.slave_manager.get_reads_queued() > 0:
+            continue
+
     def run_write_tests(self):
         for i in range(0, 10):
             # for j in range(0,5):

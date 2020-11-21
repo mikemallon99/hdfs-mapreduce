@@ -23,6 +23,11 @@ class SlaveNode():
         self.master_backup_callback = None
         self.ack_counter = 0
 
+        self.writes_queued = 0
+        self.writes_queued_lock = threading.Lock()
+        self.reads_queued = 0
+        self.reads_queued_lock = threading.Lock()
+
     def start_slave(self):
         tcp_thread = threading.Thread(target=self.listener_thread_TCP)
         udp_thread = threading.Thread(target=self.listener_thread_UDP)
@@ -46,6 +51,12 @@ class SlaveNode():
 
     def update_new_master(self, new_master_host):
         self.master_host = new_master_host
+
+    def get_writes_queued(self):
+        return self.writes_queued
+
+    def get_reads_queued(self):
+        return self.reads_queued
 
     def send_ls_to_master(self, filename):
         """
@@ -103,6 +114,11 @@ class SlaveNode():
             logging.info("File not found")
             return
 
+        # Add to write queue counter
+        self.writes_queued_lock.acquire()
+        self.writes_queued += 1
+        self.writes_queued_lock.release()
+
         message_data = json.dumps(request).encode()
         self.qman_socket.sendto(message_data, (self.master_host, QMANAGER_PORT))
         logging.info(f"Write to {self.master_host} queued")
@@ -141,6 +157,11 @@ class SlaveNode():
         time_delta = datetime.now() - date_time_obj
         logging.info(f"Upload time: {time_delta}")
 
+        # Remove from write queue counter
+        self.writes_queued_lock.acquire()
+        self.writes_queued -= 1
+        self.writes_queued_lock.release()
+
         # Delete this after
         # self.f.write(f"{time_delta}\n")
 
@@ -154,6 +175,11 @@ class SlaveNode():
         request['addr'] = [self.self_host]
         request['filename'] = sdfsfilename
         request['localfilename'] = localfilename
+
+        # Add to read queue counter
+        self.reads_queued_lock.acquire()
+        self.reads_queued += 1
+        self.reads_queued_lock.release()
 
         message_data = json.dumps(request).encode()
         self.qman_socket.sendto(message_data, (self.master_host, QMANAGER_PORT))
@@ -185,6 +211,11 @@ class SlaveNode():
                         break
                     tcp_socket_send.sendall(bytes_read)
             tcp_socket_send.close()
+
+        # Remove from read queue counter
+        self.reads_queued_lock.acquire()
+        self.reads_queued -= 1
+        self.reads_queued_lock.release()
 
         logging.info(f"Successfully sent file: {sdfsfilename} to node: {request_nodes}")
 
