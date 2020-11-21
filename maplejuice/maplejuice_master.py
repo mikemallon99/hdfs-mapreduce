@@ -17,7 +17,6 @@ class MapleJuiceMaster:
         self.ack_lock = threading.Lock()
         self.node_ip = node_ip
         self.nodes = nodes
-        self.file_table = None
         self.work_table = {}
         self.work_lock = threading.Lock()
 
@@ -30,12 +29,33 @@ class MapleJuiceMaster:
         self.mj_man_sock = None
         self.mj_listener_sock = None
 
+        self.file_table_callback = None
+
         # Populate the work table
         for node in self.nodes:
             self.work_table[node] = []
 
-    def update_file_table(self, file_table):
-        self.file_table = file_table
+    def start_master(self):
+        """
+        Starts necessary threads and initializes ports
+        """
+        logging.debug("Starting MapleJuice master.")
+
+        mj_manager_thread = threading.Thread(target=self.mj_manager_thread)
+        mj_manager_thread.start()
+
+        mj_handler_thread = threading.Thread(target=self.queue_handler_thread)
+        mj_handler_thread.start()
+
+        listener_thread = threading.Thread(target=self.listener_thread)
+        listener_thread.start()
+
+    def stop_master(self):
+        self.mj_man_sock.close()
+        self.mj_listener_sock.close()
+
+    def set_filetable_callback(self, func):
+        self.file_table_callback = func
 
     def update_node_list(self, nodes):
         """
@@ -118,7 +138,8 @@ class MapleJuiceMaster:
 
         # Search sdfs for the files
         file_list = []
-        for filename in self.file_table.keys():
+        file_table_copy = self.file_table_callback()
+        for filename in file_table_copy.keys():
             if sdfs_src_directory in filename:
                 file_list.append(filename)
 

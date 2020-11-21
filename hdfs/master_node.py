@@ -481,6 +481,9 @@ class MasterNode:
         logging.debug("Master backup info sent!")
         return
 
+    def get_filetable(self):
+        return self.filetable.copy()
+
 
 def recv_ack_thread(sock):
     """

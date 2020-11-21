@@ -2,6 +2,7 @@ from failuredetector import main as failure_detector
 from .master_node import MasterNode
 from .slave_node import SlaveNode
 from maplejuice.maplejuice_worker import MapleJuiceWorker
+from maplejuice.maplejuice_master import MapleJuiceMaster
 import socket
 import logging
 import json
@@ -39,6 +40,9 @@ class NodeManager:
         self.backup_nodetable = {}
         self.backup_filetable = {}
 
+        self.maplejuice_worker = None
+        self.maplejuice_master = None
+
     def start_thread(self, thread_name):
         if not thread_name:
             logging.error("Invalid thread!")
@@ -53,9 +57,11 @@ class NodeManager:
     def stop_threads(self):
         if not self.is_slave:
             self.master_manager.stop_master()
+            self.maplejuice_master.stop_master()
         else:
             self.slave_manager.stop_slave()
-        self.maplejuice_worker.stop_worker()
+            self.maplejuice_worker.stop_worker()
+
         logging.info("Stopping all processes from KeyboardInterrupt")
 
     def process_input(self, command, arguments):
@@ -164,12 +170,14 @@ class NodeManager:
         for node in node_dict.keys():
             nodes.append(node.split(":")[0])
 
+        # Initialize self as master
         self.master_manager = MasterNode(nodes, socket.gethostname())
         self.master_manager.start_master()
 
         # start maplejuice threads/sockets
-        self.maplejuice_worker = MapleJuiceWorker(self.fd_manager.get_id())
-        self.maplejuice_worker.start_worker()
+        self.maplejuice_master = MapleJuiceMaster(socket.gethostname(), nodes)
+        self.maplejuice_master.start_master()
+
         logging.debug(node_dict)
         for node in node_dict:
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -259,6 +267,9 @@ class NodeManager:
         self.slave_manager.send_read_request(filename, filename)
         while self.slave_manager.get_reads_queued() > 0:
             continue
+
+    def get_filetable_callback(self):
+        return
 
     def run_write_tests(self):
         for i in range(0, 10):
