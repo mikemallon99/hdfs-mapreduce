@@ -31,9 +31,10 @@ class MapleJuiceMaster:
 
         self.file_table_callback = None
 
-        # Populate the work table
+        # Populate the work table & ack table
         for node in self.nodes:
             self.work_table[node] = []
+            self.acktable[node] = 0
 
     def start_master(self):
         """
