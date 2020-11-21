@@ -234,7 +234,7 @@ def split_files_among_machines(file_list, machine_list):
                     cur_block[cur_machine].close()
                     line_cnt[cur_machine] = 0
                     block_cnt[cur_machine] = block_cnt[cur_machine] + 1
-                    new_file_name = cur_machine + "_block_" + str(block_cnt[cur_machine])+".txt"
+                    new_file_name = 'hdfs_files/'+ cur_machine + "_block_" + str(block_cnt[cur_machine])+".txt"
                     cur_block[cur_machine] = open(new_file_name, "w")
                     block_list[cur_machine].append(new_file_name)
 
