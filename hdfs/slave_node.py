@@ -212,11 +212,6 @@ class SlaveNode():
                     tcp_socket_send.sendall(bytes_read)
             tcp_socket_send.close()
 
-        # Remove from read queue counter
-        self.reads_queued_lock.acquire()
-        self.reads_queued -= 1
-        self.reads_queued_lock.release()
-
         logging.info(f"Successfully sent file: {sdfsfilename} to node: {request_nodes}")
 
 
@@ -247,6 +242,11 @@ class SlaveNode():
 
         time_delta = datetime.now() - timestamp1
         logging.info(f"Download time: {time_delta}")
+
+        # Remove from read queue counter
+        self.reads_queued_lock.acquire()
+        self.reads_queued -= 1
+        self.reads_queued_lock.release()
 
         # Delete this after
         # self.f.write(f"{time_delta}\n")
