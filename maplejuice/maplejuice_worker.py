@@ -76,6 +76,15 @@ class MapleJuiceWorker:
             elif cmd_type == "map_combine":
                 cmbn_t = threading.Thread(target=self.handle_cmbn_cmd, args=(request_json,))
                 cmbn_t.start()
+            elif cmd_type == "juice_split":
+                juice_split_t = threading.Thread(target=self.handle_juice_split_cmd, args=(request_json,))
+                juice_split_t.start()
+            elif cmd_type == "juice":
+                juice_t = threading.Thread(target=self.handle_juice_cmd, args=(request_json,))
+                juice_t.start()
+            elif cmd_type == "juice_combine":
+                cmbn_juice_t = threading.Thread(target=self.handle_juice_cmbn_cmd, args=(request_json,))
+                cmbn_juice_t.start()
             else:
                 logging.warning("MapleJuiceWorker received invalid message: " + str(request_json))
 

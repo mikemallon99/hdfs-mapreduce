@@ -385,6 +385,9 @@ class MapleJuiceMaster:
             elif request_json['type'] == 'combine_ack':
                 combine_ack_thread = threading.Thread(target=self.decrement_ack, args=(request_json['sender_host'],))
                 combine_ack_thread.start()
+            elif request_json['type'] == "juice_ack":
+                juice_ack_thread = threading.Thread(target=self.juice_ack, args=(request_json,))
+                juice_ack_thread.start()
 
     def split_ack(self, request):
         """
