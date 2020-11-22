@@ -7,6 +7,7 @@ from typing import Optional, Dict
 from .maplejuice_master import parse_and_validate_message
 import threading
 import random
+import sys
 
 NUM_INPUT_LINES = 25
 
@@ -326,56 +327,149 @@ def select_random_machines(machine_list, num_machines):
     """
     return random.sample(machine_list, num_machines)
 
-def split_files_among_machines(file_list, machine_list):
+def split_input_files(file_list, machine_list):
+    """"
+    Helper function to distribute inputs evenly across all worker machines. Splits each file into 25 line chunks and
+    assigns each to a worker machine.
     """
-    Takes a list of files and splits each into 25 line chunks, then assigns each
-    chunk to a file corresponding to a machine that will process this input block.
-    Each machine receives approximately the same number of blocks (i.e. input lines)
-    The names of the blocks follow the convention of machineID_block_i, where i is an integer
-    """
-    logging.debug(file_list)
-    logging.debug(machine_list)
+    block_list = {}  # The function output, maps machine -> list of files assigned to it
+    for machine in machine_list:
+        block_list[machine] = []
 
-    block_cnt = {}  # tracks the number of blocks assigned to a machine
     line_cnt = {}  # tracks the number of lines in the block file currently being constructed
     cur_block = {}  # maps machine -> the file object associated with the current block being constructed
-    block_list = {}  # maps machine -> list of file block inputs assigned to this machine
 
-    for machine in machine_list:
-        block_cnt[machine] = 1
-        line_cnt[machine] = 0
-        file_name = machine + "_block_" + str(block_cnt[machine])+".txt"
-        cur_block[machine] = open('hdfs_files/' + file_name, "w")
-        block_list[machine] = [file_name]
+    machine_cnt = len(machine_list)
 
     idx = 0
-    machine_cnt = len(machine_list)
-    for in_file in file_list:
-        logging.debug(in_file)
-        with open('hdfs_files/'+in_file, "r") as fp:
-            line = fp.readline()
-            while line:
+    logging.debug(file_list)
+    for file_name in file_list:
+        logging.debug(file_name)
+        with open(file_name, "r") as in_file:
+            block_cnt = 1
+            line_arr = in_file.readlines()
+            for machine in machine_list:
+                line_cnt[machine] = 0
+
+            for line in line_arr:
                 cur_machine = machine_list[idx]
-                # insert the line into the current machines block
+                # create the block file if its a new block
+                if line_cnt[cur_machine] == 0:
+                    filename = file_name.split('.')[0] + "_block_" + str(block_cnt) + ".txt"
+                    cur_block[cur_machine] = open(filename, "w")
+                    block_list[cur_machine].append(filename)
+                # add the line to the file
                 cur_block[cur_machine].write(line)
-                line_cnt[cur_machine] = line_cnt[cur_machine] + 1
-                # check if this block is full
-                if line_cnt[cur_machine] > (NUM_INPUT_LINES-1):
-                    # close current block, create new one, and add to list
-                    cur_block[cur_machine].close()
+                line_cnt[cur_machine] += 1
+                # if this block isnt full, continue to add another line
+                if line_cnt[cur_machine] == NUM_INPUT_LINES:
+                    block_cnt += 1
+                    # close this machines input block
                     line_cnt[cur_machine] = 0
-                    block_cnt[cur_machine] = block_cnt[cur_machine] + 1
-                    new_file_name = cur_machine + "_block_" + str(block_cnt[cur_machine])+".txt"
-                    cur_block[cur_machine] = open('hdfs_files/'+new_file_name, "w")
-                    block_list[cur_machine].append(new_file_name)
+                    cur_block[cur_machine].close()
+                    idx = idx + 1
+                    idx = idx % machine_cnt
 
-                # move to next machine (idx+1%num_machines)
-                idx = idx + 1
-                idx = idx % machine_cnt
-                line = fp.readline()
+            # reset variables to be used for next iteration
+            for machine in line_cnt.keys():
+                if line_cnt[machine] != 0:
+                    cur_block[machine].close()
+                line_cnt[machine] = 0
 
-    # now close all the open blocks that did not fill to NUM_INPUT_LINES
-    for open_block in cur_block.values():
-        open_block.close()
-
+    logging.debug("Split files output")
+    for m in block_list.keys():
+        msg = m + ": " + str(block_list[m])
+        logging.debug(msg)
     return block_list
+
+
+def run_maple_exe(maple_exe, src_file):
+    """
+    runs the maple executable on a given file
+    returns the list of key, value pairs output by the maple executable
+    The return of the maple executable should be in the format [(k1, v1), (k2, v2), ...]
+    """
+    __import__(maple_exe)
+    maple_func = sys.modules[maple_exe]
+    key = get_key_from_in_filename(src_file)
+    with open(src_file, "r") as src_fp:
+        values = src_fp.readlines()
+    key_value_list = maple_func.run(key, values)
+    # logging.debug(key_value_list)
+    return key_value_list
+
+
+def get_key_from_in_filename(filename):
+    """
+    Given the intermediate maple filename, returns the key name
+    filename format = [key_name]_block_[block#]
+    """
+    split_ = filename.split("_")
+    last_idx = len(split_) - 1
+    key_name_arr = split_[0:last_idx - 1]
+    key_name = ""
+    for word in key_name_arr:
+        key_name = key_name + word + "_"
+    key_name = key_name[:-1]
+    logging.debug("Key from file [" + filename + "] => " + key_name)
+    return key_name
+
+
+def get_prefix_from_out_filename(filename):
+    """
+    Given the filename of the emitted (key, values) from maple, this function extracts the filename
+    of the maple destination file
+    filename format = [prefix]_[key]_[machine_id]
+    """
+    split_name = filename.split("_")
+    dest_file_prfx = ""
+    for word in split_name:
+        if "fa20-cs425" in word:
+            break
+        dest_file_prfx += word
+        dest_file_prfx += "_"
+
+    dest_file_prfx = dest_file_prfx[:-1]
+    logging.debug("Destination file: "+dest_file_prfx)
+    return dest_file_prfx
+
+
+def run_maple_on_files(maple_exe, src_file_list, file_prefix, machine_id):
+    """
+    Runs the maple_exe on each file in the src_file_list
+    Writes the list of values for each key to a file prefixed by file_prefix
+    """
+    key_files_dict = {}  # dictionary of keys -> file its stored at
+    key_values_dict = {}  # dictionary of keys -> list of values
+
+    # run maple on each input file
+    for src_file in src_file_list:
+        kv_list = run_maple_exe(maple_exe, src_file)
+        for key_value in kv_list:
+            key_values_dict.setdefault(key_value[0], []).append(key_value[1])
+
+    # after maple is done, write all keys to a file with the intermediate_filename_prefix
+    for key in key_values_dict.keys():
+        dest_filename = file_prefix+"_"+str(key)+"_"+machine_id
+        with open(dest_filename, "w") as out_file:
+            values = key_values_dict[key]
+            out_file.write("\n".join(str(value) for value in values))
+        key_files_dict.setdefault(key, []).append(dest_filename)
+
+    return key_files_dict
+
+
+def combine_key_files(key_map):
+    """
+    Takes the key_map input [dict: key -> list of files storing key values] and combines all files
+    holding the values into one file per key
+    """
+    for key in key_map.keys():
+        dest_filename = get_prefix_from_out_filename(key_map[key][0])
+        with open(dest_filename, "w") as dest_file:
+            for value_filename in key_map[key]:
+                with open(value_filename, "r") as value_file:
+                    values = value_file.readlines()
+                    dest_file.writelines(values)
+                    dest_file.write("\n")
+    return None
