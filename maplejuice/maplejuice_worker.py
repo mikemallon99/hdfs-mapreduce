@@ -345,7 +345,7 @@ def split_input_files(file_list, machine_list):
     logging.debug(file_list)
     for file_name in file_list:
         logging.debug(file_name)
-        with open(file_name, "r") as in_file:
+        with open("hdfs_files/" + file_name, "r") as in_file:
             block_cnt = 1
             line_arr = in_file.readlines()
             for machine in machine_list:
@@ -356,7 +356,7 @@ def split_input_files(file_list, machine_list):
                 # create the block file if its a new block
                 if line_cnt[cur_machine] == 0:
                     filename = file_name.split('.')[0] + "_block_" + str(block_cnt) + ".txt"
-                    cur_block[cur_machine] = open(filename, "w")
+                    cur_block[cur_machine] = open("hdfs_files/" + filename, "w")
                     block_list[cur_machine].append(filename)
                 # add the line to the file
                 cur_block[cur_machine].write(line)
