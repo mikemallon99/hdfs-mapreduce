@@ -90,7 +90,7 @@ class MapleJuiceWorker:
         """
         logging.debug("Received split command: "+str(request_json))
         master_node = request_json['sender_host']
-        num_maples = request_json['num_maples']
+        num_maples = int(request_json['num_maples'])
         file_list = request_json['file_list']
 
         # Call split function here
