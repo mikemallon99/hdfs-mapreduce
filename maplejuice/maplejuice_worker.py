@@ -230,7 +230,7 @@ class MapleJuiceWorker:
 
         master_node = request_json['sender_host']
         combine_list = request_json['combine_list']
-
+        delete_file_list = request_json['file_list']
 
         # Pull each file from the sdfs
         for key in combine_list.keys():
@@ -252,6 +252,9 @@ class MapleJuiceWorker:
         for key in combine_list.keys():
             for file in combine_list[key]:
                 self.sdfs_delete_callback(file)
+
+        for file in delete_file_list:
+            self.sdfs_delete_callback(file)
 
         # Send final ack to the master
         response = {}

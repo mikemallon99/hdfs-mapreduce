@@ -266,9 +266,12 @@ class MapleJuiceMaster:
         self.node_key_table.clear()
         self.node_key_table_lock.release()
 
+        self.all_intermediate_blocks = []
+
         self.work_lock.acquire()
         logging.info(f"Sending work data to {self.work_table}")
         for node in self.work_table.keys():
+            self.all_intermediate_blocks += self.work_table[node]
             self.send_maple_message(node, self.work_table[node], sock)
         self.work_lock.release()
 
@@ -286,6 +289,7 @@ class MapleJuiceMaster:
         response['sender_host'] = self.node_ip
         response['type'] = 'map_combine'
         response['combine_list'] = self.node_key_table
+        response['file_list'] = self.all_intermediate_blocks
 
         logging.info(f"Sending combine request to {self.target_node}")
         message_data = json.dumps(response).encode()
