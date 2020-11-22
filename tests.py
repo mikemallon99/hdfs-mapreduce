@@ -1,6 +1,7 @@
 import argparse
 import logging
-from maplejuice.maplejuice_worker import split_input_files, get_key_from_in_filename, run_maple_on_files, get_prefix_from_out_filename, combine_key_files
+from maplejuice.maplejuice_worker import split_input_files, get_key_from_in_filename, run_maple_on_files, \
+    get_prefix_from_out_filename, combine_key_files, split_juice_keys
 import subprocess
 import sys
 
@@ -73,6 +74,15 @@ def test_combine():
     return "DONE"
 
 
+def test_juice_split():
+    key_list = ['intermediate_prefix_key1', 'intermediate_prefix_key2']
+    machines = ['fa20-cs425-g49-01', 'fa20-cs425-g49-02']
+    dict_ = split_juice_keys(key_list, machines)
+    for key in dict_.keys():
+        print(key+" :"+str(dict_[key]))
+    return "DONE"
+
+
 def parse_args():
     """
     parse the CLI arguments
@@ -87,6 +97,7 @@ def parse_args():
     parser.add_argument("--m_run", default=False, action="store_true")
     parser.add_argument("--prfx", default=False, action="store_true")
     parser.add_argument("--combine", default=False, action="store_true")
+    parser.add_argument("--j_split", default=False, action="store_true")
 
     p_args = parser.parse_args()
 
@@ -103,6 +114,8 @@ def parse_args():
         ret = test_prefix()
     elif p_args.combine:
         ret = test_combine()
+    elif p_args.j_split:
+        ret = test_juice_split()
     else:
         ret = "No test ran"
     print(ret)
