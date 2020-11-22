@@ -148,6 +148,7 @@ class MapleJuiceMaster:
         response = dict.copy(request)
         response['type'] = 'split'
         response['file_list'] = file_list
+        response['num_maples'] = num_maples
         response['sender_host'] = self.node_ip
 
         # Increment ack table for requesting nodes

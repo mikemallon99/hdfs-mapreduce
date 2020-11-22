@@ -6,6 +6,7 @@ from datetime import datetime
 from typing import Optional, Dict
 from .maplejuice_master import parse_and_validate_message
 import threading
+import random
 
 NUM_INPUT_LINES = 25
 
@@ -89,10 +90,12 @@ class MapleJuiceWorker:
         """
         logging.debug("Received split command: "+str(request_json))
         master_node = request_json['sender_host']
+        num_maples = request_json['num_maples']
         file_list = request_json['file_list']
 
         # Call split function here
-        split_file_dict = split_files_among_machines(file_list, self.nodes)
+        random_nodes = select_random_machines(self.nodes, num_maples)
+        split_file_dict = split_files_among_machines(file_list, random_nodes)
         # Add files to sdfs here
         for node in split_file_dict.keys():
             for file in split_file_dict[node]:
@@ -194,6 +197,11 @@ class MapleJuiceWorker:
         logging.info(msg_json['type'] + " command sent to master to be queued")
         return
 
+def select_random_machines(machine_list, num_machines):
+    """
+    Take in a list of machines and select a random set to distribute from
+    """
+    return random.sample(machine_list, num_machines)
 
 def split_files_among_machines(file_list, machine_list):
     """
