@@ -162,19 +162,23 @@ class MapleJuiceWorker:
         maple_exe = request_json['maple_exe']
         master_node = request_json['sender_host']
         file_list = request_json['file_list']
+        file_prefix = request_json['file_prefix']
 
         # Pull each file from the sdfs
         for file in file_list:
             self.sdfs_read_callback(file)
 
         # TODO: Have map function wait until file exists to open it
+        key_files = run_maple_on_files(maple_exe, file_list, file_prefix, self.node_id)
 
         # Run map command on each individual file and accumulate its outputs
+        """
         key_files = {}
         for file in file_list:
             key_files_dict = {}
             for key in key_files_dict.keys():
                 key_files[key] = key_files.get(key, []) + key_files_dict[key]
+        """
 
         response = {}
         response['type'] = 'map_ack'
@@ -238,12 +242,14 @@ class MapleJuiceWorker:
             for file in combine_list[key]:
                 self.sdfs_read_callback(file)
 
-        key_files = {}
+        key_files = combine_key_files(combine_list)
         # Combine all files with the same key
+        """
         for key in combine_list.keys():
             # TODO: Call function here that takes in list of files and a key
             key, file = '', ''
             key_files[key] = file
+        """
 
         # Push all files to the SDFS
         for key in key_files.keys():
@@ -464,12 +470,14 @@ def combine_key_files(key_map):
     Takes the key_map input [dict: key -> list of files storing key values] and combines all files
     holding the values into one file per key
     """
+    output_files = {}
     for key in key_map.keys():
         dest_filename = get_prefix_from_out_filename(key_map[key][0])
+        output_files[key] = dest_filename
         with open(dest_filename, "w") as dest_file:
             for value_filename in key_map[key]:
                 with open(value_filename, "r") as value_file:
                     values = value_file.readlines()
                     dest_file.writelines(values)
                     dest_file.write("\n")
-    return None
+    return output_files
