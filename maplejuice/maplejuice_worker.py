@@ -175,17 +175,18 @@ def run_maple_exe(maple_exe, src_file):
     """
     __import__(maple_exe)
     maple_func = sys.modules[maple_exe]
-    key = get_key_from_filename(src_file)
+    key = get_key_from_in_filename(src_file)
     with open(src_file, "r") as src_fp:
         values = src_fp.readlines()
     key_value_list = maple_func.run(key, values)
-    logging.debug(key_value_list)
+    # logging.debug(key_value_list)
     return key_value_list
 
 
-def get_key_from_filename(filename):
+def get_key_from_in_filename(filename):
     """
     Given the intermediate maple filename, returns the key name
+    filename format = [key_name]_block_[block#]
     """
     split_ = filename.split("_")
     last_idx = len(split_) - 1
@@ -198,7 +199,26 @@ def get_key_from_filename(filename):
     return key_name
 
 
-def run_maple_on_files(maple_exe, src_file_list, file_prefix):
+def get_prefix_from_out_filename(filename):
+    """
+    Given the filename of the emitted (key, values) from maple, this function extracts the filename
+    of the maple destination file
+    filename format = [prefix]_[key]_[machine_id]
+    """
+    split_name = filename.split("_")
+    dest_file_prfx = ""
+    for word in split_name:
+        if "fa20-cs425" in word:
+            break
+        dest_file_prfx += word
+        dest_file_prfx += "_"
+
+    dest_file_prfx = dest_file_prfx[:-1]
+    logging.debug("Destination file: "+dest_file_prfx)
+    return dest_file_prfx
+
+
+def run_maple_on_files(maple_exe, src_file_list, file_prefix, machine_id):
     """
     Runs the maple_exe on each file in the src_file_list
     Writes the list of values for each key to a file prefixed by file_prefix
@@ -214,10 +234,26 @@ def run_maple_on_files(maple_exe, src_file_list, file_prefix):
 
     # after maple is done, write all keys to a file with the intermediate_filename_prefix
     for key in key_values_dict.keys():
-        dest_filename = file_prefix+"_"+str(key)
+        dest_filename = file_prefix+"_"+str(key)+"_"+machine_id
         with open(dest_filename, "w") as out_file:
             values = key_values_dict[key]
             out_file.write("\n".join(str(value) for value in values))
         key_files_dict.setdefault(key, []).append(dest_filename)
 
     return key_files_dict
+
+
+def combine_key_files(key_map):
+    """
+    Takes the key_map input [dict: key -> list of files storing key values] and combines all files
+    holding the values into one file per key
+    """
+    for key in key_map.keys():
+        dest_filename = get_prefix_from_out_filename(key_map[key][0])
+        with open(dest_filename, "w") as dest_file:
+            for value_filename in key_map[key]:
+                with open(value_filename, "r") as value_file:
+                    values = value_file.readlines()
+                    dest_file.writelines(values)
+                    dest_file.write("\n")
+    return None
