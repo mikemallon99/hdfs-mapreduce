@@ -125,6 +125,92 @@ class MapleJuiceMaster:
                     logging.info(f"Handling juice request from {request['sender_host']}")
                     self.handle_juice(request, self.mj_listener_sock)
 
+    def handle_juice(self, request, sock):
+        """
+        Process a juice request
+        """
+        self.cur_application = request['juice_exe']
+        num_juices = request['num_juices']
+        self.cur_prefix = request['file_prefix']
+        sdfs_dest_filename = request['sdfs_dest_filename']
+        self.target_node = request['sender_host']
+        delete_input = request['delete_input']
+
+        # Search sdfs for the files
+        file_list = []
+        file_table_copy = self.file_table_callback()
+        for filename in file_table_copy.keys():
+            if self.cur_prefix in filename:
+                file_list.append(filename)
+
+        # Send filenames to requester
+        response = dict.copy(request)
+        response['type'] = 'juice_split'
+        response['file_list'] = file_list
+        response['num_juices'] = num_juices
+        response['sender_host'] = self.node_ip
+
+        # Increment ack table for requesting nodes
+        self.ack_lock.acquire()
+        self.acktable[self.target_node] += 1
+        self.ack_lock.release()
+        logging.info(f"Sending juice split data to {self.target_node}")
+        message_data = json.dumps(response).encode()
+        sock.sendto(message_data, (self.target_node, MJ_HANDLER_PORT))
+
+        # Wait for the split acknowledgement message
+        start_time = datetime.now()
+        counts = 0
+        nodes = [self.target_node]
+        while not (len(nodes) == 0 or counts >= 3) and self.target_node in self.work_table.keys():
+            nodes = self.validate_acks()
+            if (datetime.now() - start_time).total_seconds() > 120:
+                # redo sends
+                logging.info(f"Trying again")
+                sock.sendto(message_data, (self.target_node, MJ_HANDLER_PORT))
+                start_time = datetime.now()
+                counts += 1
+                if counts == 3:
+                    logging.info("Juice Split failed")
+
+        # Once we have recieved the split, we can add the worker nodes to the work
+        # table and inform them of the operations they must perform
+
+        self.work_lock.acquire()
+        logging.info(f"Sending juice work data to {self.work_table}")
+        for node in self.work_table.keys():
+            self.send_juice_message(node, self.work_table[node], sock)
+        self.work_lock.release()
+
+        # After sending the messages, wait for all of the ack bits
+        while True:
+            if len(self.validate_acks()) == 0:
+                break
+
+        # Send a message back to the requester telling it to combine all the files
+        self.ack_lock.acquire()
+        self.acktable[self.target_node] += 1
+        self.ack_lock.release()
+
+        response = {}
+        response['sender_host'] = self.node_ip
+        response['type'] = 'juice_combine'
+        response['combine_list'] = self.node_key_table
+        response['sdfs_dest_filename'] = sdfs_dest_filename
+        response['delete_input'] = delete_input
+        response['file_list'] = file_list
+
+        logging.info(f"Sending combine request to {self.target_node}")
+        message_data = json.dumps(response).encode()
+        sock.sendto(message_data, (self.target_node, MJ_HANDLER_PORT))
+
+        # Wait for the final ack indicating the files have been combined
+        while True:
+            if len(self.validate_acks()) == 0:
+                break
+
+        logging.info(f"Combine ack received, juice request completed.")
+
     def handle_maple(self, request, sock):
         """
         Process a maple request
@@ -212,6 +298,32 @@ class MapleJuiceMaster:
 
         logging.info(f"Combine ack received, maple request completed.")
 
+    def send_juice_message(self, node, files, sock):
+        """
+        Send a message to a worker telling it to process files
+        Additionally, increment the ack table for that node
+        """
+        if len(files) == 0:
+            return
+
+        response = {}
+        response['sender_host'] = self.node_ip
+        response['type'] = 'juice'
+        response['juice_exe'] = self.cur_application
+        response['file_list'] = files
+        response['file_prefix'] = self.cur_prefix
+        self.ack_lock.acquire()
+        self.acktable[node] += 1
+        self.ack_lock.release()
+
+        # Double check to make sure node is alive
+        work_table_copy = self.work_table.copy()
+        if node not in work_table_copy.keys():
+            node = work_table_copy.keys()[0]
+
+        message_data = json.dumps(response).encode()
+        sock.sendto(message_data, (node, MJ_HANDLER_PORT))
+
     def send_maple_message(self, node, files, sock):
         """
         Send a message to a worker telling it to process files
@@ -294,6 +406,21 @@ class MapleJuiceMaster:
             self.node_key_table[key] = self.node_key_table.get(key, []) + request['key_list']['key']
         self.node_key_table_lock.release()
         self.work_lock.acquire()
+        for file in request['file_list']:
+            self.work_table[request['sender_host']].remove(file)
+        self.work_lock.release()
+        self.decrement_ack(request['sender_host'])
+
+    def juice_ack(self, request):
+        """
+        Use this function to populate the node file table with the produced juice file
+        """
+        self.node_key_table_lock.acquire()
+        for key in request['key_list'].keys():
+            self.node_key_table[key] = self.node_key_table.get(key, []) + request['key_list']['key']
+        self.node_key_table_lock.release()
+        self.work_lock.acquire()
+        # Remove all files corresponding to request from work table
         for file in request['file_list']:
             self.work_table[request['sender_host']].remove(file)
         self.work_lock.release()

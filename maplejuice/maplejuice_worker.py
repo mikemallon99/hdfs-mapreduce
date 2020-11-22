@@ -27,6 +27,7 @@ class MapleJuiceWorker:
 
         self.sdfs_write_callback = None
         self.sdfs_read_callback = None
+        self.sdfs_delete_callback = None
 
     def start_worker(self):
         """
@@ -84,6 +85,9 @@ class MapleJuiceWorker:
     def set_sdfs_read_callback(self, func):
         self.sdfs_read_callback = func
 
+    def set_sdfs_delete_callback(self, func):
+        self.sdfs_delete_callback = func
+
     def handle_split_cmd(self, request_json):
         """
         handles all processing for the split phase of the maple command
@@ -110,6 +114,32 @@ class MapleJuiceWorker:
         self.cmd_sock.sendto(message_data, (master_node, MJ_HANDLER_PORT))
 
         logging.debug(f"Sent split_ack to master with list: {split_file_dict}")
+
+        return
+
+    def handle_juice_split_cmd(self, request_json):
+        """
+        handles all processing for the split phase of the juice command
+        """
+        logging.debug("Received juice split command: "+str(request_json))
+        master_node = request_json['sender_host']
+        num_juices = int(request_json['num_juices'])
+        file_list = request_json['file_list']
+
+        # Call split function here
+        random_nodes = select_random_machines(self.nodes, num_juices)
+        # This is a dict containing each machine ip and the files added to it
+        split_file_dict = {}
+
+        # Send ack to master
+        response = {}
+        response['type'] = 'split_ack'
+        response['node_ips'] = split_file_dict
+        response['sender_host'] = self.node_id
+        message_data = json.dumps(response).encode()
+        self.cmd_sock.sendto(message_data, (master_node, MJ_HANDLER_PORT))
+
+        logging.debug(f"Sent juice split_ack to master with list: {split_file_dict}")
 
         return
 
@@ -148,6 +178,41 @@ class MapleJuiceWorker:
 
         return
 
+    def handle_juice_cmd(self, request_json):
+        """
+        handles all processing for the reduce phase of the juice command
+        """
+        logging.debug("Received juice command: " + str(request_json))
+
+        juice_exe = request_json['juice_exe']
+        master_node = request_json['sender_host']
+        file_list = request_json['file_list']
+
+        # Pull each file from the sdfs
+        for file in file_list:
+            self.sdfs_read_callback(file)
+
+        # TODO: Have map function wait until file exists to open it
+
+        # Run map command on each individual file and accumulate its outputs
+        key_files = {}
+        for file in file_list:
+            key_files_dict = {}
+            for key in key_files.keys():
+                key_files[key] = key_files.get(key, []) + key_files_dict[key]
+
+        response = {}
+        response['type'] = 'juice_ack'
+        response['key_list'] = key_files
+        response['file_list'] = file_list
+        response['sender_host'] = self.node_id
+        message_data = json.dumps(response).encode()
+        self.cmd_sock.sendto(message_data, (master_node, MJ_HANDLER_PORT))
+
+        logging.debug(f"Sent juice_ack to master with list: {key_files}")
+
+        return
+
     def handle_cmbn_cmd(self, request_json):
         """
         hanldes all processing for the combine phase of the maple command
@@ -156,6 +221,7 @@ class MapleJuiceWorker:
 
         master_node = request_json['sender_host']
         combine_list = request_json['combine_list']
+
 
         # Pull each file from the sdfs
         for key in combine_list.keys():
@@ -172,6 +238,51 @@ class MapleJuiceWorker:
         # Push all files to the SDFS
         for key in key_files.keys():
             self.sdfs_write_callback(key_files[key])
+
+        # delete all intermediate files from sdfs
+        for key in combine_list.keys():
+            for file in combine_list[key]:
+                self.sdfs_delete_callback(file)
+
+        # Send final ack to the master
+        response = {}
+        response['type'] = 'combine_ack'
+        response['key_files'] = key_files
+        response['sender_host'] = self.node_id
+        message_data = json.dumps(response).encode()
+        self.cmd_sock.sendto(message_data, (master_node, MJ_HANDLER_PORT))
+
+        logging.debug(f"Sent combine_ack to master with list: {key_files}")
+
+        return
+
+    def handle_juice_cmbn_cmd(self, request_json):
+        """
+        hanldes all processing for the combine phase of the maple command
+        """
+        logging.debug("Received juice combine command: " + str(request_json))
+
+        master_node = request_json['sender_host']
+        combine_list = request_json['combine_list']
+        sdfs_dest_filename = request_json['sdfs_dest_filename']
+        juice_delete = request_json['delete_input']
+        delete_file_list = request_json['file_list']
+
+        # Pull each file from the sdfs
+        for key in combine_list.keys():
+            for file in combine_list[key]:
+                self.sdfs_read_callback(file)
+
+        # Insert function here to combine all files into a single file
+        # With name = sdfs_dest_filename
+
+        # Push all files to the SDFS
+        self.sdfs_write_callback(sdfs_dest_filename)
+
+        # Delete all intermediate files if delete is true
+        if int(juice_delete) == 1:
+            for file in delete_file_list:
+                self.sdfs_delete_callback(file)
 
         # Send final ack to the master
         response = {}

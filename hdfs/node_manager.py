@@ -164,6 +164,7 @@ class NodeManager:
                         self.maplejuice_worker = MapleJuiceWorker(self.fd_manager.get_id().split(":")[0], nodes)
                         self.maplejuice_worker.set_sdfs_write_callback(self.sdfs_write_callback)
                         self.maplejuice_worker.set_sdfs_read_callback(self.sdfs_read_callback)
+                        self.maplejuice_worker.set_sdfs_delete_callback(self.sdfs_delete_callback)
                         self.maplejuice_worker.start_worker()
             finally:
                 logging.debug("SDFS start socket closed")
@@ -279,6 +280,9 @@ class NodeManager:
         self.slave_manager.send_read_request(filename, filename)
         while self.slave_manager.get_reads_queued() > 0:
             continue
+
+    def sdfs_delete_callback(self, filename):
+        self.slave_manager.send_delete_request(filename)
 
     def get_filetable_callback(self):
         return self.master_manager.get_filetable()
