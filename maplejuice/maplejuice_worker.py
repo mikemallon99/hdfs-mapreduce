@@ -296,12 +296,12 @@ class MapleJuiceWorker:
         # Send final ack to the master
         response = {}
         response['type'] = 'combine_ack'
-        response['key_files'] = key_files
+        response['sdfs_dest_filename'] = sdfs_dest_filename
         response['sender_host'] = self.node_id
         message_data = json.dumps(response).encode()
         self.cmd_sock.sendto(message_data, (master_node, MJ_HANDLER_PORT))
 
-        logging.debug(f"Sent combine_ack to master with list: {key_files}")
+        logging.debug(f"Sent juice combine_ack to master with list: {sdfs_dest_filename}")
 
         return
 
