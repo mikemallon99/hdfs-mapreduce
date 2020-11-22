@@ -109,7 +109,7 @@ class MapleJuiceWorker:
 
         # Call split function here
         random_nodes = select_random_machines(self.nodes, num_maples)
-        split_file_dict = split_files_among_machines(file_list, random_nodes)
+        split_file_dict = split_input_files(file_list, random_nodes)
         # Add files to sdfs here
         for node in split_file_dict.keys():
             for file in split_file_dict[node]:
