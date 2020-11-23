@@ -111,7 +111,7 @@ class SlaveNode():
         try:
             filesize = os.path.getsize("hdfs_files/" + localfilename)
         except FileNotFoundError:
-            logging.info("File not found")
+            logging.info(f"File {localfilename} not found")
             return
 
         # Add to write queue counter
