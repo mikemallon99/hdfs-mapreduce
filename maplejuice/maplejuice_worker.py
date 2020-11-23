@@ -397,7 +397,7 @@ def run_maple_exe(maple_exe, src_file):
     returns the list of key, value pairs output by the maple executable
     The return of the maple executable should be in the format [(k1, v1), (k2, v2), ...]
     """
-    __import__(maple_exe)
+    __import__('hdfs_files/' + maple_exe)
     maple_module = sys.modules[maple_exe]
     key = get_key_from_in_filename(src_file)
     with open(src_file, "r") as src_fp:
