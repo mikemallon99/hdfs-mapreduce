@@ -1,7 +1,7 @@
 import argparse
 import logging
 from maplejuice.maplejuice_worker import split_input_files, get_key_from_in_filename, run_maple_on_files, \
-    get_prefix_from_out_filename, combine_key_files, split_juice_keys
+    get_prefix_from_out_filename, combine_key_files, split_juice_keys, get_key_from_juice_input, run_juice_on_files
 import subprocess
 import sys
 
@@ -75,11 +75,36 @@ def test_combine():
 
 
 def test_juice_split():
-    key_list = ['intermediate_prefix_key1', 'intermediate_prefix_key2']
-    machines = ['fa20-cs425-g49-01', 'fa20-cs425-g49-02']
+    key_list = ['intermediate_prefix_key1',
+                'intermediate_prefix_key2',
+                'intermediate_prefix_key3',
+                'intermediate_prefix_key4']
+    machines = ['fa20-cs425-g49-01', 'fa20-cs425-g49-02', 'fa20-cs425-g49-03']
     dict_ = split_juice_keys(key_list, machines)
     for key in dict_.keys():
         print(key+" :"+str(dict_[key]))
+    return "DONE"
+
+
+def test_juice_get_keyname():
+    samplefile = "___intermediate___p_rfgedfix_tkghest_fds_fsd_key1"
+    prefix = "___intermediate___p_rfgedfix_tkghest_fds_fsd"
+    key = get_key_from_juice_input(samplefile, prefix)
+    print("Filename: "+samplefile)
+    print("Key: "+key)
+    return "DONE"
+
+
+def test_juice_run():
+    juice_exe = "sample"
+    file_list = ["intermediate_prefix_key1",
+                 "intermediate_prefix_key2"]
+    int_prefix = "intermediate_prefix"
+    dest_prefix = "dest_prefix"
+    machine_id = "fa20-cs425-g49-01"
+    dict_out = run_juice_on_files(juice_exe, file_list, int_prefix, dest_prefix, machine_id)
+    for key in dict_out.keys():
+        print(key+" :"+str(dict_out[key]))
     return "DONE"
 
 
@@ -98,6 +123,8 @@ def parse_args():
     parser.add_argument("--prfx", default=False, action="store_true")
     parser.add_argument("--combine", default=False, action="store_true")
     parser.add_argument("--j_split", default=False, action="store_true")
+    parser.add_argument("--j_key", default=False, action="store_true")
+    parser.add_argument("--j_run", default=False, action="store_true")
 
     p_args = parser.parse_args()
 
@@ -116,6 +143,10 @@ def parse_args():
         ret = test_combine()
     elif p_args.j_split:
         ret = test_juice_split()
+    elif p_args.j_key:
+        ret = test_juice_get_keyname()
+    elif p_args.j_run:
+        ret = test_juice_run()
     else:
         ret = "No test ran"
     print(ret)

@@ -484,3 +484,38 @@ def split_juice_keys(key_files, machines):
         file_dict.setdefault(cur_machine, []).append(k_filename)
 
     return file_dict
+
+
+def get_key_from_juice_input(juice_in_file, intermediate_prefix):
+    key_name = juice_in_file.replace(intermediate_prefix+"_", "")
+    return key_name
+
+
+def run_juice_on_files(juice_exe, src_file_list, int_prefix, dest_prefix, machine_id):
+    juice_output = {}
+    key_outfile_dict = {}
+
+    # run juice on each key file in the list, append each output value to a list per output key
+    for juice_file in src_file_list:
+        key_name = get_key_from_juice_input(juice_file, int_prefix)
+        kv_pair = run_juice_exe(juice_exe, juice_file, key_name)
+        juice_output.setdefault(kv_pair[0], []).append(kv_pair[1])
+
+    # writes all the outputs from the files to the destination file of this machine
+    for key in juice_output.keys():
+        dest_filename = dest_prefix + "_" + str(key) + "_" + machine_id
+        with open(dest_filename, "w") as dest_file:
+            values = juice_output[key]
+            dest_file.writelines("\n".join(str(value) for value in values))
+        key_outfile_dict.setdefault(key, []).append(dest_filename)
+
+    return key_outfile_dict
+
+
+def run_juice_exe(juice_exe, key_file, key_value):
+    __import__(juice_exe)
+    juice_module = sys.modules[juice_exe]
+    with open(key_file, "r") as value_f:
+        values = value_f.readlines()
+    juice_out = juice_module.juice(key_value, values)
+    return juice_out
