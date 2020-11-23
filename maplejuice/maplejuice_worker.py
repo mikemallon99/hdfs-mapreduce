@@ -241,17 +241,12 @@ class MapleJuiceWorker:
                 self.sdfs_read_callback(file)
 
         key_files = combine_key_files(combine_list)
-        # Combine all files with the same key
-        """
-        for key in combine_list.keys():
-            # TODO: Call function here that takes in list of files and a key
-            key, file = '', ''
-            key_files[key] = file
-        """
 
         # Push all files to the SDFS
         for key in key_files.keys():
             self.sdfs_write_callback(key_files[key])
+
+        logging.debug("Combined all files. Deleting intermediate files.")
 
         # delete all intermediate files from sdfs
         for key in combine_list.keys():
