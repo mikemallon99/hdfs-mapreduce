@@ -18,7 +18,7 @@ def generate_testfiles(files):
 
     for i in range(0, files):
         f = open('votesample' + str(i), 'w')
-        for line in range(0, 25)
+        for line in range(0, 25):
             random_ranking = random.sample(candidates, 3)
             for cand in random_ranking:
                 f.write(cand + ',')
