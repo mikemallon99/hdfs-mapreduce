@@ -173,14 +173,10 @@ class MapleJuiceWorker:
         # TODO: Have map function wait until file exists to open it
         key_files = run_maple_on_files(maple_exe, file_list, file_prefix, self.node_id)
 
-        # Run map command on each individual file and accumulate its outputs
-        """
-        key_files = {}
-        for file in file_list:
-            key_files_dict = {}
-            for key in key_files_dict.keys():
-                key_files[key] = key_files.get(key, []) + key_files_dict[key]
-        """
+        # Put all files into the SDFS
+        for key in key_files.keys():
+            for file in key_files[key]:
+                self.sdfs_write_callback(file)
 
         response = {}
         response['type'] = 'map_ack'
