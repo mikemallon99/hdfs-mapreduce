@@ -473,9 +473,9 @@ def combine_key_files(key_map):
     for key in key_map.keys():
         dest_filename = get_prefix_from_out_filename(key_map[key][0])
         output_files[key] = dest_filename
-        with open(dest_filename, "w") as dest_file:
+        with open('hdfs_files/'+dest_filename, "w") as dest_file:
             for value_filename in key_map[key]:
-                with open(value_filename, "r") as value_file:
+                with open('hdfs_files/'+value_filename, "r") as value_file:
                     values = value_file.readlines()
                     dest_file.writelines(values)
                     dest_file.write("\n")
@@ -510,7 +510,7 @@ def run_juice_on_files(juice_exe, src_file_list, int_prefix, dest_prefix, machin
     # writes all the outputs from the files to the destination file of this machine
     for key in juice_output.keys():
         dest_filename = dest_prefix + "_" + str(key) + "_" + machine_id
-        with open(dest_filename, "w") as dest_file:
+        with open('hdfs_files/'+dest_filename, "w") as dest_file:
             values = juice_output[key]
             dest_file.writelines("\n".join(str(value) for value in values))
         key_outfile_dict.setdefault(key, []).append(dest_filename)
@@ -521,7 +521,7 @@ def run_juice_on_files(juice_exe, src_file_list, int_prefix, dest_prefix, machin
 def run_juice_exe(juice_exe, key_file, key_value):
     __import__(juice_exe)
     juice_module = sys.modules[juice_exe]
-    with open(key_file, "r") as value_f:
+    with open('hdfs_files/'+key_file, "r") as value_f:
         values = value_f.readlines()
     juice_out = juice_module.juice(key_value, values)
     return juice_out
