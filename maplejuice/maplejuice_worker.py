@@ -456,7 +456,7 @@ def run_maple_on_files(maple_exe, src_file_list, file_prefix, machine_id):
     # after maple is done, write all keys to a file with the intermediate_filename_prefix
     for key in key_values_dict.keys():
         dest_filename = file_prefix+"_"+str(key)+"_"+machine_id
-        with open(dest_filename, "w") as out_file:
+        with open('hdfs_files/'+dest_filename, "w") as out_file:
             values = key_values_dict[key]
             out_file.write("\n".join(str(value) for value in values))
         key_files_dict.setdefault(key, []).append(dest_filename)
