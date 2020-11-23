@@ -278,7 +278,7 @@ class NodeManager:
         Send a read request and do not terminate until the request is completed
         """
         self.slave_manager.send_read_request(filename, filename)
-        while not os.path.isfile(filename):
+        while not os.path.isfile('hdfs_files/'+filename):
             continue
 
     def sdfs_delete_callback(self, filename):
