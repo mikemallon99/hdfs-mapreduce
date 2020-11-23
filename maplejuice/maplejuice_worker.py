@@ -168,6 +168,7 @@ class MapleJuiceWorker:
         # Pull each file from the sdfs
         for file in file_list:
             self.sdfs_read_callback(file)
+        self.sdfs_read_callback(maple_exe)
 
         # TODO: Have map function wait until file exists to open it
         key_files = run_maple_on_files(maple_exe, file_list, file_prefix, self.node_id)
