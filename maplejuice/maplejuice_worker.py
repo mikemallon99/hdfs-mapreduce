@@ -8,6 +8,7 @@ from .maplejuice_master import parse_and_validate_message
 import threading
 import random
 import sys
+from itertools import cycle
 
 NUM_INPUT_LINES = 25
 
@@ -481,3 +482,13 @@ def combine_key_files(key_map):
                     dest_file.writelines(values)
                     dest_file.write("\n")
     return output_files
+
+
+def split_juice_keys(key_files, machines):
+    file_dict = {}
+    machine_list_cycle = cycle(machines)
+    for k_filename in key_files:
+        cur_machine = next(machine_list_cycle)
+        file_dict.setdefault(cur_machine, []).append(k_filename)
+
+    return file_dict
