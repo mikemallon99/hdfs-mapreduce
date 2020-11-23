@@ -410,7 +410,7 @@ class MapleJuiceMaster:
         # The node key table maps a key to all the files associated with that key
         self.node_key_table_lock.acquire()
         for key in request['key_list'].keys():
-            self.node_key_table[key] = self.node_key_table.get(key, []) + request['key_list']['key']
+            self.node_key_table[key] = self.node_key_table.get(key, []) + request['key_list'][key]
         self.node_key_table_lock.release()
         self.work_lock.acquire()
         for file in request['file_list']:
