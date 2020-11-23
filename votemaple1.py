@@ -8,9 +8,9 @@ def maple(key, value):
         for i in range(0,2):
             for j in range(i+1, 3):
                 if votes[i] < votes[j]:
-                    return_list.append([votes[i]+'-'+votes[j], [1]])
+                    return_list.append([votes[i]+'-'+votes[j], 1])
                 else:
-                    return_list.append([votes[j]+'-'+votes[i], [0]])
+                    return_list.append([votes[j]+'-'+votes[i], 0])
     return return_list
 
 def generate_testfiles(files):
