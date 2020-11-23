@@ -1,7 +1,7 @@
 from failuredetector import main as failure_detector
 from .master_node import MasterNode
 from .slave_node import SlaveNode
-from maplejuice.maplejuice_worker import MapleJuiceWorker
+from maplejuice.maplejuice_worker import MapleJuiceWorker, put_all
 from maplejuice.maplejuice_master import MapleJuiceMaster
 import socket
 import logging
@@ -9,7 +9,7 @@ import json
 import threading
 import os, time
 
-dfs_cmds = ["start_sdfs", "master", "put", "get", "delete", "ls", "store", "write_test", "read_test"]
+dfs_cmds = ["start_sdfs", "master", "put", "putall", "get", "delete", "ls", "store", "write_test", "read_test"]
 fd_cmds = ["join", "list", "id", "leave", "fail"]
 mj_cmds = ["maple", "juice"]
 
@@ -94,6 +94,10 @@ class NodeManager:
                     logging.info("SDFS not started!")
             elif command == "put":
                 self.slave_manager.send_write_request(localfilename=arguments[0], sdfsfilename=arguments[1])
+            elif command == "putall":
+                files = put_all(arguments[0])
+                for file in files:
+                    self.slave_manager.send_write_request(localfilename=file, sdfsfilename=file)
             elif command == "get":
                 self.slave_manager.send_read_request(localfilename=arguments[1], sdfsfilename=arguments[0])
             elif command == "ls":

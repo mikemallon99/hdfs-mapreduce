@@ -8,6 +8,7 @@ from .maplejuice_master import parse_and_validate_message
 import threading
 import random
 import sys
+from os import listdir
 from itertools import cycle
 
 NUM_INPUT_LINES = 25
@@ -319,6 +320,16 @@ class MapleJuiceWorker:
         self.mjman_socket.sendto(msg_data, (master_addr, MJ_MANAGER_PORT))
         logging.info(msg_json['type'] + " command sent to master to be queued")
         return
+
+def put_all(file_prefix):
+    """
+    Take a prefix and queue a write command for each file with that prefix
+    """
+    files = []
+    for f in listdir('hdfs_files/'):
+        if file_prefix in f:
+            files.append(f)
+    return files
 
 def select_random_machines(machine_list, num_machines):
     """
