@@ -9,6 +9,6 @@ def map_format(string_list):
     for string in string_list:
         key = string.split("|")[0]
         value = string.split("|")[1]
-        value.replace("\n", "")
+        value = value.replace("\n", "")
         output_lines.append([key, value])
     return output_lines
