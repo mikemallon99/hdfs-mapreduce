@@ -9,6 +9,6 @@ def juice(key, value):
     key_a = key.split('-')[0]
     key_b = key.split('-')[1]
     if one_count > zero_count:
-        return [[key_a, key_b]]
+        return [key_a, key_b]
     else:
-        return [[key_b, key_a]]
+        return [key_b, key_a]
