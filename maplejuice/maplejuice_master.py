@@ -180,7 +180,7 @@ class MapleJuiceMaster:
         self.work_lock.acquire()
         logging.info(f"Sending juice work data to {self.work_table}")
         for node in self.work_table.keys():
-            self.send_juice_message(node, node, self.work_table[node], sock)
+            self.send_juice_message(node, node, self.work_table[node], sdfs_dest_filename, sock)
         self.work_lock.release()
 
         # After sending the messages, wait for all of the ack bits
@@ -304,7 +304,7 @@ class MapleJuiceMaster:
 
         logging.info(f"Combine ack received, maple request completed.")
 
-    def send_juice_message(self, target_node, send_node, files, sock):
+    def send_juice_message(self, target_node, send_node, files, sdfs_dest_filename, sock):
         """
         Send a message to a worker telling it to process files
         Additionally, increment the ack table for that node
@@ -318,6 +318,7 @@ class MapleJuiceMaster:
         response['juice_exe'] = self.cur_application
         response['file_list'] = files
         response['file_prefix'] = self.cur_prefix
+        response['sdfs_dest_filename'] = sdfs_dest_filename
         response['target_id'] = target_node
 
         # Double check to make sure node is alive
