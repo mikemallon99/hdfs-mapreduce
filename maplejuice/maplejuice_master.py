@@ -179,7 +179,7 @@ class MapleJuiceMaster:
         self.work_lock.acquire()
         logging.info(f"Sending juice work data to {self.work_table}")
         for node in self.work_table.keys():
-            self.send_juice_message(node, self.work_table[node], sock)
+            self.send_juice_message(node, node, self.work_table[node], sock)
         self.work_lock.release()
 
         # After sending the messages, wait for all of the ack bits
@@ -303,7 +303,7 @@ class MapleJuiceMaster:
 
         logging.info(f"Combine ack received, maple request completed.")
 
-    def send_juice_message(self, node, files, sock):
+    def send_juice_message(self, target_node, send_node, files, sock):
         """
         Send a message to a worker telling it to process files
         Additionally, increment the ack table for that node
@@ -317,17 +317,19 @@ class MapleJuiceMaster:
         response['juice_exe'] = self.cur_application
         response['file_list'] = files
         response['file_prefix'] = self.cur_prefix
-        self.ack_lock.acquire()
-        self.acktable[node] += 1
-        self.ack_lock.release()
+        response['target_id'] = target_node
 
         # Double check to make sure node is alive
         work_table_copy = self.work_table.copy()
-        if node not in work_table_copy.keys():
-            node = work_table_copy.keys()[0]
+        if send_node not in work_table_copy.keys():
+            send_node = work_table_copy.keys()[0]
+
+        self.ack_lock.acquire()
+        self.acktable[send_node] += 1
+        self.ack_lock.release()
 
         message_data = json.dumps(response).encode()
-        sock.sendto(message_data, (node, MJ_HANDLER_PORT))
+        sock.sendto(message_data, (send_node, MJ_HANDLER_PORT))
 
     def send_maple_message(self, target_node, send_node, files, sock):
         """
