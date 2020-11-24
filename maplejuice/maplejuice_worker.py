@@ -297,7 +297,7 @@ class MapleJuiceWorker:
                 file_list.append(file)
 
         # Insert function here to combine all files into a single file
-        output_filename = combine_juice_output(file_list)
+        output_filename = combine_juice_output(file_list, sdfs_dest_filename)
 
         # Push all files to the SDFS
         self.sdfs_write_callback(sdfs_dest_filename)
