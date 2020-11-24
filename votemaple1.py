@@ -8,9 +8,9 @@ def maple(key_value_pair):
         for i in range(0,len(votes)-1):
             for j in range(i+1, len(votes)):
                 if votes[i] < votes[j]:
-                    return_list.append([votes[i]+'-'+votes[j], [1]])
+                    return_list.append([votes[i]+'-'+votes[j], 1])
                 else:
-                    return_list.append([votes[j]+'-'+votes[i], [0]])
+                    return_list.append([votes[j]+'-'+votes[i], 0])
     return return_list
 
 def map_format(string_list):
