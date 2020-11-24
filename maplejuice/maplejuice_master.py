@@ -431,7 +431,7 @@ class MapleJuiceMaster:
         """
         self.node_key_table_lock.acquire()
         for key in request['key_list'].keys():
-            self.node_key_table[key] = self.node_key_table.get(key, []) + request['key_list']['key']
+            self.node_key_table[key] = self.node_key_table.get(key, []) + request['key_list'][key]
         self.node_key_table_lock.release()
         self.work_lock.acquire()
         # Remove all files corresponding to request from work table
