@@ -1,17 +1,25 @@
 import random
 
-def maple(key, value):
+def maple(key_value_pair):
     return_list = []
-    for vote_list in value:
+    for key, values in key_value_pair:
         # Take each string and interpet it as a vote
-        votes = vote_list.split(',')
-        for i in range(0,2):
-            for j in range(i+1, 3):
+        votes = values.split(',')
+        for i in range(0,len(votes)-1):
+            for j in range(i+1, len(votes)):
                 if votes[i] < votes[j]:
-                    return_list.append([votes[i]+'-'+votes[j], 1])
+                    return_list.append([votes[i]+'-'+votes[j], [1]])
                 else:
-                    return_list.append([votes[j]+'-'+votes[i], 0])
+                    return_list.append([votes[j]+'-'+votes[i], [0]])
     return return_list
+
+def map_format(string_list):
+    output_lines = []
+    for string in string_list:
+        key = string.split("|")[0]
+        value = string.split("|")[1]
+        output_lines.append([key, value])
+    return output_lines
 
 def generate_testfiles(files):
     candidates = ['c1', 'c2', 'c3']
