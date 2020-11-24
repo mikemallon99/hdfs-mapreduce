@@ -28,6 +28,7 @@ def generate_testfiles(files):
         f = open('votesample' + str(i), 'w')
         for line in range(0, 25):
             random_ranking = random.sample(candidates, 3)
+            f.write("key|")
             for cand in random_ranking:
                 f.write(cand + ',')
             f.write('\n')
