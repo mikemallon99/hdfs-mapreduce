@@ -343,7 +343,7 @@ class MapleJuiceMaster:
         response['maple_exe'] = self.cur_application
         response['file_list'] = files
         response['file_prefix'] = self.cur_prefix
-        response['target_node'] = target_node
+        response['target_id'] = target_node
 
         # Double check to make sure node is alive
         work_table_copy = self.work_table.copy()
