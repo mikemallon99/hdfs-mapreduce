@@ -344,14 +344,15 @@ class MapleJuiceMaster:
         response['file_list'] = files
         response['file_prefix'] = self.cur_prefix
         response['target_node'] = target_node
-        self.ack_lock.acquire()
-        self.acktable[send_node] += 1
-        self.ack_lock.release()
 
         # Double check to make sure node is alive
         work_table_copy = self.work_table.copy()
-        if node not in work_table_copy.keys():
-            node = work_table_copy.keys()[0]
+        if send_node not in work_table_copy.keys():
+            send_node = work_table_copy.keys()[0]
+
+        self.ack_lock.acquire()
+        self.acktable[send_node] += 1
+        self.ack_lock.release()
 
         message_data = json.dumps(response).encode()
         sock.sendto(message_data, (send_node, MJ_HANDLER_PORT))
