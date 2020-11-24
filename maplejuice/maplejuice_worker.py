@@ -144,6 +144,11 @@ class MapleJuiceWorker:
         # This is a dict containing each machine ip and the files added to it
         split_file_dict = split_juice_keys(file_list, random_nodes)
 
+        # Add files to sdfs here
+        for node in split_file_dict.keys():
+            for file in split_file_dict[node]:
+                self.sdfs_write_callback(file)
+
         # Send ack to master
         response = {}
         response['type'] = 'split_ack'
@@ -197,7 +202,7 @@ class MapleJuiceWorker:
         """
         handles all processing for the reduce phase of the juice command
         """
-        logging.debug("Received juice command: " + str(request_json))
+        logging.info("Received juice command" )
 
         juice_exe = request_json['juice_exe']
         master_node = request_json['sender_host']
@@ -232,7 +237,7 @@ class MapleJuiceWorker:
         """
         hanldes all processing for the combine phase of the maple command
         """
-        logging.debug("Received combine command: " + str(request_json))
+        logging.info("Received combine command: ")
 
         master_node = request_json['sender_host']
         combine_list = request_json['combine_list']
@@ -275,7 +280,7 @@ class MapleJuiceWorker:
         """
         hanldes all processing for the combine phase of the maple command
         """
-        logging.debug("Received juice combine command: " + str(request_json))
+        logging.info("Received juice combine command")
 
         master_node = request_json['sender_host']
         combine_list = request_json['combine_list']
@@ -546,7 +551,7 @@ def get_dest_prefix(juice_outfile):
     return dest_name
 
 
-def combine_juice_output(file_list):
+def combine_juice_output(file_list, dest_filename):
     sample_file = file_list[0]
     dest_file_name = get_dest_prefix(sample_file)
     final_output = []
@@ -561,7 +566,7 @@ def combine_juice_output(file_list):
 
     logging.debug(final_output)
 
-    with open('hdfs_files/'+dest_file_name, "w") as dest_file:
+    with open('hdfs_files/'+dest_filename, "w") as dest_file:
         dest_file.write("\n".join(str(kv) for kv in final_output))
 
     return dest_file_name
