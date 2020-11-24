@@ -14,4 +14,4 @@ def juice(key, value):
         elif cand_dict[cand] == cand_dict.get(top_cand, 0):
             top_cand_list.append(cand)
 
-    return [['winner', top_cand_list]]
+    return ['winner', top_cand_list]

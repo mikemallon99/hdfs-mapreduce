@@ -25,6 +25,8 @@ class MapleJuiceMaster:
 
         self.cur_application = ''
         self.cur_prefix = ''
+        self.cur_task = ''
+        self.cur_dest = ''
 
         self.mj_man_sock = None
         self.mj_listener_sock = None
@@ -136,6 +138,9 @@ class MapleJuiceMaster:
         self.target_node = request['sender_host']
         delete_input = request['delete_input']
 
+        self.cur_task = 'juice'
+        self.cur_dest = sdfs_dest_filename
+
         # Search sdfs for the files
         file_list = []
         file_table_copy = self.file_table_callback()
@@ -228,6 +233,8 @@ class MapleJuiceMaster:
         self.cur_prefix = request['file_prefix']
         sdfs_src_directory = request['sdfs_src_directory']
         self.target_node = request['sender_host']
+
+        self.cur_task = 'maple'
 
         # Search sdfs for the files
         file_list = []
@@ -475,7 +482,10 @@ class MapleJuiceMaster:
         self.ack_lock.release()
 
         # Send work message to the new node
-        self.send_maple_message(node, new_node, work, self.mj_listener_sock)
+        if self.cur_task == 'maple':
+            self.send_maple_message(node, new_node, work, self.mj_listener_sock)
+        elif self.cur_task == 'juice':
+            self.send_juice_message(node, new_node, work, self.mj_listener_sock)
 
         # Check if this node is the target
         if self.target_node == node:
