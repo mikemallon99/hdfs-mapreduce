@@ -280,7 +280,7 @@ class MapleJuiceWorker:
         """
         hanldes all processing for the combine phase of the maple command
         """
-        logging.info("Received juice combine command")
+        logging.info(f"Received juice combine command: {request_json}")
 
         master_node = request_json['sender_host']
         combine_list = request_json['combine_list']

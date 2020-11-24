@@ -289,7 +289,7 @@ class MasterNode:
         filename = request['filename']
 
         # Get the nodes that contain the file
-        nodes = self.filetable.pop(filename)
+        nodes = self.filetable.pop(filename, [])
         # Remove the filename from all the nodes in the nodetable
         for node in nodes:
             self.nodetable[node].remove(filename)
