@@ -213,6 +213,9 @@ class MapleJuiceWorker:
 
         juice_file = run_juice_on_files(juice_exe, file_list, prefix, destination_prefix, target_id)
 
+        # put file in sdfs
+        self.sdfs_write_callback(juice_file)
+
         response = {}
         response['type'] = 'juice_ack'
         response['key_list'] = {'juice': [juice_file]}
