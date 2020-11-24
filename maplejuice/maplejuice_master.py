@@ -272,7 +272,7 @@ class MapleJuiceMaster:
         logging.info(f"Sending work data to {self.work_table}")
         for node in self.work_table.keys():
             self.all_intermediate_blocks += self.work_table[node]
-            self.send_maple_message(node, self.work_table[node], sock)
+            self.send_maple_message(node, node, self.work_table[node], sock)
         self.work_lock.release()
 
         # After sending the messages, wait for all of the ack bits
@@ -328,7 +328,7 @@ class MapleJuiceMaster:
         message_data = json.dumps(response).encode()
         sock.sendto(message_data, (node, MJ_HANDLER_PORT))
 
-    def send_maple_message(self, node, files, sock):
+    def send_maple_message(self, target_node, send_node, files, sock):
         """
         Send a message to a worker telling it to process files
         Additionally, increment the ack table for that node
@@ -342,6 +342,7 @@ class MapleJuiceMaster:
         response['maple_exe'] = self.cur_application
         response['file_list'] = files
         response['file_prefix'] = self.cur_prefix
+        response['target_node'] = target_node
         self.ack_lock.acquire()
         self.acktable[node] += 1
         self.ack_lock.release()
@@ -352,7 +353,7 @@ class MapleJuiceMaster:
             node = work_table_copy.keys()[0]
 
         message_data = json.dumps(response).encode()
-        sock.sendto(message_data, (node, MJ_HANDLER_PORT))
+        sock.sendto(message_data, (send_node, MJ_HANDLER_PORT))
 
     def validate_acks(self):
         """
@@ -458,7 +459,7 @@ class MapleJuiceMaster:
         self.work_lock.release()
 
         # Send work message to the new node
-        self.send_maple_message(new_node, work, self.mj_listener_sock)
+        self.send_maple_message(node, new_node, work, self.mj_listener_sock)
 
         # Check if this node is the target
         if self.target_node == node:

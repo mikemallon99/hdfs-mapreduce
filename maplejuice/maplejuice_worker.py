@@ -165,6 +165,7 @@ class MapleJuiceWorker:
         master_node = request_json['sender_host']
         file_list = request_json['file_list']
         file_prefix = request_json['file_prefix']
+        target_id = request_json['target_id']
 
         # Pull each file from the sdfs
         for file in file_list:
@@ -172,7 +173,7 @@ class MapleJuiceWorker:
         self.sdfs_read_callback(maple_exe)
 
         # TODO: Have map function wait until file exists to open it
-        key_files = run_maple_on_files(maple_exe, file_list, file_prefix, self.node_id)
+        key_files = run_maple_on_files(maple_exe, file_list, file_prefix, target_id)
 
         # Put all files into the SDFS
         for key in key_files.keys():
