@@ -527,8 +527,9 @@ def run_juice_on_files(juice_exe, src_file_list, int_prefix, dest_prefix, machin
 
 
 def run_juice_exe(juice_exe, key_file, key_value):
-    __import__(juice_exe)
-    juice_module = sys.modules[juice_exe]
+    module_name = 'hdfs_files.' + juice_exe.split(".")[0]
+    __import__(module_name)
+    juice_module = sys.modules[module_name]
     with open('hdfs_files/'+key_file, "r") as value_f:
         values = value_f.readlines()
     juice_out = juice_module.juice(key_value, values)
