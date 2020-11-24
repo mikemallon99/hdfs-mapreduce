@@ -108,10 +108,11 @@ class MapleJuiceWorker:
         master_node = request_json['sender_host']
         num_maples = int(request_json['num_maples'])
         file_list = request_json['file_list']
+        prefix = request_json['sdfs_src_prefix']
 
         # Call split function here
         random_nodes = select_random_machines(self.nodes, num_maples)
-        split_file_dict = split_input_files(file_list, random_nodes)
+        split_file_dict = split_input_files(file_list, random_nodes, prefix)
         # Add files to sdfs here
         for node in split_file_dict.keys():
             for file in split_file_dict[node]:
