@@ -334,7 +334,8 @@ def select_random_machines(machine_list, num_machines):
     """
     return random.sample(machine_list, num_machines)
 
-def split_input_files(file_list, machine_list):
+def split_input_files(file_list, machine_list, sdfs_src_prefix):
+    # TODO == This needs access to the source prefix
     """"
     Helper function to distribute inputs evenly across all worker machines. Splits each file into 25 line chunks and
     assigns each to a worker machine.
@@ -352,6 +353,7 @@ def split_input_files(file_list, machine_list):
     logging.debug(file_list)
     for file_name in file_list:
         logging.debug(file_name)
+        # with open(file_name, "r") as in_file:
         with open("hdfs_files/" + file_name, "r") as in_file:
             block_cnt = 1
             line_arr = in_file.readlines()
@@ -362,7 +364,7 @@ def split_input_files(file_list, machine_list):
                 cur_machine = machine_list[idx]
                 # create the block file if its a new block
                 if line_cnt[cur_machine] == 0:
-                    filename = file_name.split('.')[0] + "_block_" + str(block_cnt) + ".txt"
+                    filename = file_name + "_block_" + str(block_cnt)
                     cur_block[cur_machine] = open("hdfs_files/" + filename, "w")
                     block_list[cur_machine].append(filename)
                 # add the line to the file
@@ -389,7 +391,7 @@ def split_input_files(file_list, machine_list):
         logging.debug(msg)
     return block_list
 
-
+# New map format compatible
 def run_maple_exe(maple_exe, src_file):
     """
     runs the maple executable on a given file
@@ -398,14 +400,18 @@ def run_maple_exe(maple_exe, src_file):
     """
     __import__(maple_exe)
     maple_module = sys.modules[maple_exe]
-    key = get_key_from_in_filename(src_file)
     with open(src_file, "r") as src_fp:
-        values = src_fp.readlines()
-    key_value_list = maple_module.maple(key, values)
+        lines = src_fp.readlines()
+    kv_in_list = maple_module.map_format(lines)
+    kv_out_list = maple_module.maple(kv_in_list)
+    return kv_out_list
+    # key = get_key_from_in_filename(src_file)
+    # with open(src_file, "r") as src_fp:
+    #     values = src_fp.readlines()
+    # key_value_list = maple_module.maple(key, values)
     # logging.debug(key_value_list)
-    return key_value_list
 
-
+# TODO == not needed given our new map format
 def get_key_from_in_filename(filename):
     """
     Given the intermediate maple filename, returns the key name
@@ -421,7 +427,7 @@ def get_key_from_in_filename(filename):
     logging.debug("Key from file [" + filename + "] => " + key_name)
     return key_name
 
-
+# New map format compatible
 def get_prefix_from_out_filename(filename):
     """
     Given the filename of the emitted (key, values) from maple, this function extracts the filename
@@ -440,7 +446,7 @@ def get_prefix_from_out_filename(filename):
     logging.debug("Destination file: "+dest_file_prfx)
     return dest_file_prfx
 
-
+# New map format compatible
 def run_maple_on_files(maple_exe, src_file_list, file_prefix, machine_id):
     """
     Runs the maple_exe on each file in the src_file_list
@@ -465,7 +471,7 @@ def run_maple_on_files(maple_exe, src_file_list, file_prefix, machine_id):
 
     return key_files_dict
 
-
+# New map format compatible
 def combine_key_files(key_map):
     """
     Takes the key_map input [dict: key -> list of files storing key values] and combines all files
@@ -476,11 +482,12 @@ def combine_key_files(key_map):
         dest_filename = get_prefix_from_out_filename(key_map[key][0])
         output_files[key] = dest_filename
         with open(dest_filename, "w") as dest_file:
-            for value_filename in key_map[key]:
+            for i, value_filename in enumerate(key_map[key]):
                 with open(value_filename, "r") as value_file:
+                    if i:
+                        dest_file.write("\n")
                     values = value_file.readlines()
                     dest_file.writelines(values)
-                    dest_file.write("\n")
     return output_files
 
 
@@ -500,24 +507,20 @@ def get_key_from_juice_input(juice_in_file, intermediate_prefix):
 
 
 def run_juice_on_files(juice_exe, src_file_list, int_prefix, dest_prefix, machine_id):
-    juice_output = {}
-    key_outfile_dict = {}
+    juice_output = []  # list of key, value pairs output from the juice executable
 
-    # run juice on each key file in the list, append each output value to a list per output key
+    # run juice on each key file in the list, append each output to a list
     for juice_file in src_file_list:
         key_name = get_key_from_juice_input(juice_file, int_prefix)
         kv_pair = run_juice_exe(juice_exe, juice_file, key_name)
-        juice_output.setdefault(kv_pair[0], []).append(kv_pair[1])
+        juice_output.append(kv_pair)
 
-    # writes all the outputs from the files to the destination file of this machine
-    for key in juice_output.keys():
-        dest_filename = dest_prefix + "_" + str(key) + "_" + machine_id
-        with open(dest_filename, "w") as dest_file:
-            values = juice_output[key]
-            dest_file.writelines("\n".join(str(value) for value in values))
-        key_outfile_dict.setdefault(key, []).append(dest_filename)
+    # writes all the outputs to the destination file of this machine
+    outfile_name = dest_prefix + "_" + machine_id
+    with open(outfile_name, "w") as outfile:
+        outfile.writelines("\n".join(str(kv_pair[0])+"|"+str(kv_pair[1]) for kv_pair in juice_output))
 
-    return key_outfile_dict
+    return outfile_name
 
 
 def run_juice_exe(juice_exe, key_file, key_value):
@@ -527,3 +530,31 @@ def run_juice_exe(juice_exe, key_file, key_value):
         values = value_f.readlines()
     juice_out = juice_module.juice(key_value, values)
     return juice_out
+
+
+def get_dest_prefix(juice_outfile):
+    split_name = juice_outfile.split("_")
+    split_name.pop()  # remove the machine id from the name
+    dest_name = "_".join(str(word) for word in split_name)
+    return dest_name
+
+
+def combine_juice_output(file_list):
+    sample_file = file_list[0]
+    dest_file_name = get_dest_prefix(sample_file)
+    final_output = []
+    for file in file_list:
+        with open(file, "r") as fp:
+            out_list = fp.readlines()
+        for kv in out_list:
+            if kv[-1] == '\n':
+                kv = kv[:-1]
+            final_output.append(kv)
+            logging.debug(kv)
+
+    logging.debug(final_output)
+
+    with open(dest_file_name, "w") as dest_file:
+        dest_file.write("\n".join(str(kv) for kv in final_output))
+
+    return dest_file_name

@@ -1,15 +1,16 @@
 import argparse
 import logging
 from maplejuice.maplejuice_worker import split_input_files, get_key_from_in_filename, run_maple_on_files, \
-    get_prefix_from_out_filename, combine_key_files, split_juice_keys, get_key_from_juice_input, run_juice_on_files
+    get_prefix_from_out_filename, combine_key_files, split_juice_keys, get_key_from_juice_input, run_juice_on_files, \
+    get_dest_prefix, combine_juice_output
 import subprocess
 import sys
 
 
 def test_split():
     # create 2 files with 100 lines
-    test_file_1 = open("test1.txt", "w")
-    test_file_2 = open("test2.txt", "w")
+    test_file_1 = open("prefix_test1", "w")
+    test_file_2 = open("prefix_test2", "w")
 
     test_file_1.write("file 1: line # 0")
     test_file_2.write("file 2: line # 0")
@@ -21,9 +22,9 @@ def test_split():
     test_file_1.close()
     test_file_2.close()
 
-    file_list = ["test1.txt", "test2.txt"]
+    file_list = ["prefix_test1", "prefix_test2"]
     machine_list = ["machine_1", "machine_2"]
-    split_input_files(file_list, machine_list)
+    split_input_files(file_list, machine_list, "prefix_")
 
     return "DONE"
 
@@ -102,9 +103,29 @@ def test_juice_run():
     int_prefix = "intermediate_prefix"
     dest_prefix = "dest_prefix"
     machine_id = "fa20-cs425-g49-01"
-    dict_out = run_juice_on_files(juice_exe, file_list, int_prefix, dest_prefix, machine_id)
-    for key in dict_out.keys():
-        print(key+" :"+str(dict_out[key]))
+    outfile_name = run_juice_on_files(juice_exe, file_list, int_prefix, dest_prefix, machine_id)
+    print(outfile_name)
+    return "DONE"
+
+
+def test_dest_name():
+    intermediate_dest = "dest_prefix_key1_fa20-cs425-g49-01"
+    dest = get_dest_prefix(intermediate_dest)
+    print("Destination name: "+dest)
+    return "DONE"
+
+
+def test_tuple():
+    s = "('key', 1)"
+    t = tuple(s)
+    print(t)
+    return "DONE"
+
+
+def test_juice_combine():
+    file_list = ["dest_prefix_fa20-cs425-g49-01", "dest_prefix_fa20-cs425-g49-02"]
+    outfile = combine_juice_output(file_list)
+    print(outfile)
     return "DONE"
 
 
@@ -125,6 +146,9 @@ def parse_args():
     parser.add_argument("--j_split", default=False, action="store_true")
     parser.add_argument("--j_key", default=False, action="store_true")
     parser.add_argument("--j_run", default=False, action="store_true")
+    parser.add_argument("--dest", default=False, action="store_true")
+    parser.add_argument("--tuple", default=False, action="store_true")
+    parser.add_argument("--j_combine", default=False, action="store_true")
 
     p_args = parser.parse_args()
 
@@ -147,6 +171,12 @@ def parse_args():
         ret = test_juice_get_keyname()
     elif p_args.j_run:
         ret = test_juice_run()
+    elif p_args.dest:
+        ret = test_dest_name()
+    elif p_args.tuple:
+        ret = test_tuple()
+    elif p_args.j_combine:
+        ret = test_juice_combine()
     else:
         ret = "No test ran"
     print(ret)
