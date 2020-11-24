@@ -5,8 +5,8 @@ def maple(key_value_pair):
     for key, values in key_value_pair:
         # Take each string and interpet it as a vote
         votes = values.split(',')
-        for i in range(0,len(votes)-1):
-            for j in range(i+1, len(votes)):
+        for i in range(0,2):
+            for j in range(i+1, 3):
                 if votes[i] < votes[j]:
                     return_list.append([votes[i]+'-'+votes[j], 1])
                 else:
