@@ -150,6 +150,7 @@ class MapleJuiceMaster:
         response['num_juices'] = num_juices
         response['sender_host'] = self.node_ip
         response['sdfs_dest_filename'] = sdfs_dest_filename
+        response['file_prefix'] = self.cur_prefix
 
         # Increment ack table for requesting nodes
         self.ack_lock.acquire()
@@ -176,6 +177,10 @@ class MapleJuiceMaster:
 
         # Once we have recieved the split, we can add the worker nodes to the work
         # table and inform them of the operations they must perform
+
+        self.node_key_table_lock.acquire()
+        self.node_key_table.clear()
+        self.node_key_table_lock.release()
 
         self.work_lock.acquire()
         logging.info(f"Sending juice work data to {self.work_table}")

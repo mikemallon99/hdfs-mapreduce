@@ -207,7 +207,7 @@ class MapleJuiceWorker:
         juice_exe = request_json['juice_exe']
         master_node = request_json['sender_host']
         file_list = request_json['file_list']
-        prefix = request_json['sdfs_dest_filename']
+        prefix = request_json['file_prefix']
         destination_prefix = request_json['sdfs_dest_filename']
         target_id = request_json['target_id']
 
