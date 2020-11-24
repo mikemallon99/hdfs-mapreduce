@@ -1,4 +1,4 @@
-def reduce(key, value):
+def juice(key, value):
     cand_dict = {}
     for pair in value:
         key_a = pair.split('-')[0]

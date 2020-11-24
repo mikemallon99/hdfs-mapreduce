@@ -1,4 +1,4 @@
-def reduce(key, value):
+def juice(key, value):
     zero_count = 0
     one_count = 0
     for num in value:
