@@ -345,7 +345,7 @@ class MapleJuiceMaster:
         response['file_prefix'] = self.cur_prefix
         response['target_node'] = target_node
         self.ack_lock.acquire()
-        self.acktable[node] += 1
+        self.acktable[send_node] += 1
         self.ack_lock.release()
 
         # Double check to make sure node is alive
@@ -458,6 +458,11 @@ class MapleJuiceMaster:
         new_node = self.work_table.keys()[0]
         self.work_table[new_node] = self.work_table.get(new_node, []) + work
         self.work_lock.release()
+
+        # Clear the ack table for this node
+        self.ack_lock.acquire()
+        self.acktable[node] = 0
+        self.ack_lock.release()
 
         # Send work message to the new node
         self.send_maple_message(node, new_node, work, self.mj_listener_sock)
