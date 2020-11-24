@@ -149,6 +149,7 @@ class MapleJuiceMaster:
         response['file_list'] = file_list
         response['num_juices'] = num_juices
         response['sender_host'] = self.node_ip
+        request_json['sdfs_dest_filename'] = sdfs_dest_filename
 
         # Increment ack table for requesting nodes
         self.ack_lock.acquire()
