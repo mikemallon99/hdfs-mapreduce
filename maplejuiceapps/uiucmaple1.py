@@ -2,7 +2,7 @@
 def maple(key_value_pairs):
     output_pairs = []
     for key, values in key_value_pairs:
-        if str(values) > 30:
+        if int(values) > 30:
             output_pairs.append([1, values])
     return output_pairs
 
@@ -13,6 +13,5 @@ def map_format(string_list):
         units = string.split(",")[3].replace(" ", "")
         if units == "":
             continue
-        value = value.replace("\n", "")
         output_lines.append([key, units])
     return output_lines
