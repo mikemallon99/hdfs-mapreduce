@@ -23,6 +23,7 @@ class MapleJuiceMaster:
         self.node_key_table = {}
         self.node_key_table_lock = threading.Lock()
 
+        # Keep track of the current task for the failure detector
         self.cur_application = ''
         self.cur_prefix = ''
         self.cur_task = ''
@@ -54,10 +55,16 @@ class MapleJuiceMaster:
         listener_thread.start()
 
     def stop_master(self):
+        """
+        Stop the master and close all sockets
+        """
         self.mj_man_sock.close()
         self.mj_listener_sock.close()
 
     def set_filetable_callback(self, func):
+        """
+        Set the callback function to retrieve the SDFS filetable
+        """
         self.file_table_callback = func
 
     def update_node_list(self, nodes):
@@ -67,11 +74,17 @@ class MapleJuiceMaster:
         self.nodes = nodes
 
     def enqueue_maple(self, request):
+        """
+        Safetly queue a maple request
+        """
         self.queue_lock.acquire()
         self.op_queue.append(request)
         self.queue_lock.release()
 
     def enqueue_juice(self, request):
+        """
+        Safetly queue a juice request
+        """
         self.queue_lock.acquire()
         self.op_queue.append(request)
         self.queue_lock.release()

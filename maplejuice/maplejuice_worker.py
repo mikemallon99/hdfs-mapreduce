@@ -503,6 +503,9 @@ def combine_key_files(key_map):
 
 
 def split_juice_keys(key_files, machines):
+    """
+    Assigns a key to a specific worker node
+    """
     file_dict = {}
     machine_list_cycle = cycle(machines)
     for k_filename in key_files:
@@ -518,6 +521,9 @@ def get_key_from_juice_input(juice_in_file, intermediate_prefix):
 
 
 def run_juice_on_files(juice_exe, src_file_list, int_prefix, dest_prefix, machine_id):
+    """
+    Have the juice exe compute the (key, value) pairs in each file
+    """
     juice_output = []  # list of key, value pairs output from the juice executable
 
     # run juice on each key file in the list, append each output to a list
@@ -535,6 +541,9 @@ def run_juice_on_files(juice_exe, src_file_list, int_prefix, dest_prefix, machin
 
 
 def run_juice_exe(juice_exe, key_file, key_value):
+    """
+    Run the juice exe on a specific file
+    """
     module_name = 'hdfs_files.' + juice_exe.split(".")[0]
     __import__(module_name)
     juice_module = sys.modules[module_name]
@@ -545,6 +554,9 @@ def run_juice_exe(juice_exe, key_file, key_value):
 
 
 def get_dest_prefix(juice_outfile):
+    """
+    Extract the destination prefix from a filename
+    """
     split_name = juice_outfile.split("_")
     split_name.pop()  # remove the machine id from the name
     dest_name = "_".join(str(word) for word in split_name)
@@ -552,6 +564,9 @@ def get_dest_prefix(juice_outfile):
 
 
 def combine_juice_output(file_list, dest_filename):
+    """
+    Combine all the key/value pair files into a single output file
+    """
     sample_file = file_list[0]
     dest_file_name = get_dest_prefix(sample_file)
     final_output = []
