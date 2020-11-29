@@ -28,6 +28,8 @@ class MapleJuiceMaster:
         self.cur_prefix = ''
         self.cur_task = ''
         self.cur_dest = ''
+        self.cur_filelist = []
+        self.cur_num_machines = 0
 
         self.mj_man_sock = None
         self.mj_listener_sock = None
@@ -151,15 +153,18 @@ class MapleJuiceMaster:
         self.target_node = request['sender_host']
         delete_input = request['delete_input']
 
-        self.cur_task = 'juice'
-        self.cur_dest = sdfs_dest_filename
-
         # Search sdfs for the files
         file_list = []
         file_table_copy = self.file_table_callback()
         for filename in file_table_copy.keys():
             if self.cur_prefix in filename:
                 file_list.append(filename)
+
+        # Set failure stuff
+        self.cur_filelist = file_list
+        self.cur_num_machines = num_juices
+        self.cur_task = 'juice-split'
+        self.cur_dest = sdfs_dest_filename
 
         # Send filenames to requester
         response = dict.copy(request)
@@ -179,22 +184,13 @@ class MapleJuiceMaster:
         sock.sendto(message_data, (self.target_node, MJ_HANDLER_PORT))
 
         # Wait for the split acknowledgement message
-        start_time = datetime.now()
-        counts = 0
-        nodes = [self.target_node]
-        while not (len(nodes) == 0 or counts >= 3) and self.target_node in self.work_table.keys():
-            nodes = self.validate_acks()
-            if (datetime.now() - start_time).total_seconds() > 120:
-                # redo sends
-                logging.info(f"Trying again")
-                sock.sendto(message_data, (self.target_node, MJ_HANDLER_PORT))
-                start_time = datetime.now()
-                counts += 1
-                if counts == 3:
-                    logging.info("Juice Split failed")
+        while True:
+            if len(self.validate_acks()) == 0:
+                break
 
         # Once we have recieved the split, we can add the worker nodes to the work
         # table and inform them of the operations they must perform
+        self.cur_task = 'juice'
 
         self.node_key_table_lock.acquire()
         self.node_key_table.clear()
@@ -247,14 +243,17 @@ class MapleJuiceMaster:
         sdfs_src_directory = request['sdfs_src_directory']
         self.target_node = request['sender_host']
 
-        self.cur_task = 'maple'
-
         # Search sdfs for the files
         file_list = []
         file_table_copy = self.file_table_callback()
         for filename in file_table_copy.keys():
             if sdfs_src_directory in filename:
                 file_list.append(filename)
+
+        self.cur_task = 'maple-split'
+        self.cur_filelist = file_list
+        self.cur_num_machines = num_maples
+        self.cur_dest = sdfs_src_directory
 
         # Send filenames to requester
         response = dict.copy(request)
@@ -273,22 +272,14 @@ class MapleJuiceMaster:
         sock.sendto(message_data, (self.target_node, MJ_HANDLER_PORT))
 
         # Wait for the split acknowledgement message
-        start_time = datetime.now()
-        counts = 0
-        nodes = [self.target_node]
-        while not (len(nodes) == 0 or counts >= 3) and self.target_node in self.work_table.keys():
-            nodes = self.validate_acks()
-            if (datetime.now() - start_time).total_seconds() > 120:
-                # redo sends
-                logging.info(f"Trying again")
-                sock.sendto(message_data, (self.target_node, MJ_HANDLER_PORT))
-                start_time = datetime.now()
-                counts += 1
-                if counts == 3:
-                    logging.info("Split failed")
+        while True:
+            if len(self.validate_acks()) == 0:
+                break
 
         # Once we have recieved the split, we can add the worker nodes to the work
         # table and inform them of the operations they must perform
+        self.cur_task = 'maple'
+
         self.node_key_table_lock.acquire()
         self.node_key_table.clear()
         self.node_key_table_lock.release()
@@ -494,15 +485,54 @@ class MapleJuiceMaster:
         self.acktable[node] = 0
         self.ack_lock.release()
 
-        # Send work message to the new node
-        if self.cur_task == 'maple':
-            self.send_maple_message(node, new_node, work, self.mj_listener_sock)
-        elif self.cur_task == 'juice':
-            self.send_juice_message(node, new_node, work, self.mj_listener_sock)
-
         # Check if this node is the target
         if self.target_node == node:
             self.target_node = new_node
+
+        # Send work message to the new node
+        if self.cur_task == 'maple':
+            self.work_lock.acquire()
+            self.work_table[new_node] += work
+            self.work_lock.release()
+            self.send_maple_message(node, new_node, work, self.mj_listener_sock)
+        elif self.cur_task == 'juice':
+            self.work_lock.acquire()
+            self.work_table[new_node] += work
+            self.work_lock.release()
+            self.send_juice_message(node, new_node, work, self.mj_listener_sock)
+        elif self.cur_task == 'juice-split':
+            # Send filenames to requester
+            response = {}
+            response['type'] = 'juice_split'
+            response['file_list'] = self.cur_filelist
+            response['num_juices'] = self.cur_num_machines
+            response['sender_host'] = self.node_ip
+            response['sdfs_dest_filename'] = self.cur_sdfsname
+            response['file_prefix'] = self.cur_prefix
+
+            # Increment ack table for requesting nodes
+            self.ack_lock.acquire()
+            self.acktable[self.target_node] += 1
+            self.ack_lock.release()
+            logging.info(f"Sending juice split data to {self.target_node}")
+            message_data = json.dumps(response).encode()
+            self.mj_listener_sock.sendto(message_data, (self.target_node, MJ_HANDLER_PORT))
+        elif self.cur_task == 'maple-split':
+            # Send filenames to requester
+            response = {}
+            response['type'] = 'split'
+            response['file_list'] = self.cur_filelist
+            response['num_maples'] = self.cur_num_machines
+            response['sender_host'] = self.node_ip
+            response['sdfs_src_prefix'] = self.cur_dest
+
+            # Increment ack table for requesting nodes
+            self.ack_lock.acquire()
+            self.acktable[self.target_node] += 1
+            self.ack_lock.release()
+            logging.info(f"Sending split data to {self.target_node}")
+            message_data = json.dumps(response).encode()
+            self.mj_listener_sock.sendto(message_data, (self.target_node, MJ_HANDLER_PORT))
 
 
 def parse_and_validate_message(byte_data: bytes) -> Optional[Dict]:
