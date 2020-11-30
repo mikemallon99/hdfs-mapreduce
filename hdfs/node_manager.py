@@ -228,6 +228,7 @@ class NodeManager:
             if not self.is_slave:
                 logging.debug(str(self.master_manager.nodetable))
                 self.master_manager.node_failure(node_id)
+                self.maplejuice_master.node_failure(node_id)
                 logging.debug(str(self.master_manager.nodetable))
             elif node_id == self.slave_manager.master_host:
                 logging.debug("Master failed!")
