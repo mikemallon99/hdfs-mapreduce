@@ -408,7 +408,8 @@ class MasterNode:
         # Increment ack table for requesting nodes
         for node in request_nodes:
             self.ack_lock.acquire()
-            self.acktable[node] += 1
+            if node in self.acktable.keys():
+                self.acktable[node] += 1
             self.ack_lock.release()
 
         # Inform the file node of the nodes requesting the file
