@@ -425,7 +425,7 @@ class MasterNode:
         counts = 0
         while not (len(nodes) == 0 or counts >= 3) and file_node in self.nodetable.keys():
             nodes = self.validate_acks(request_nodes)
-            if (datetime.now() - start_time).total_seconds() > 120:
+            if (datetime.now() - start_time).total_seconds() > 30:
                 # redo sends
                 logging.info(f"Trying again")
                 sock.sendto(message_data, (file_node, QHANDLER_PORT))
@@ -456,7 +456,7 @@ class MasterNode:
         for node in nodes:
             # Keep waiting if there are still needed acks
             self.ack_lock.acquire()
-            node_acks = self.acktable[node]
+            node_acks = self.acktable.get(node, 0)
             self.ack_lock.release()
             if node_acks > 0:
                 ack_nodes.append(node)
