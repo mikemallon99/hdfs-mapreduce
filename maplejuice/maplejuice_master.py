@@ -501,7 +501,7 @@ class MapleJuiceMaster:
             self.work_lock.acquire()
             self.work_table[new_node] += work
             self.work_lock.release()
-            self.send_juice_message(node, new_node, work, self.mj_listener_sock)
+            self.send_juice_message(node, new_node, work, self.cur_sdfsname, self.mj_listener_sock)
         elif self.cur_task == 'juice-split':
             # Send filenames to requester
             response = {}
