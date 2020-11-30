@@ -501,7 +501,7 @@ class MapleJuiceMaster:
             self.work_lock.acquire()
             self.work_table[new_node] += work
             self.work_lock.release()
-            self.send_juice_message(node, new_node, work, self.cur_sdfsname, self.mj_listener_sock)
+            self.send_juice_message(node, new_node, work, self.cur_dest, self.mj_listener_sock)
         elif self.cur_task == 'juice-split':
             # Send filenames to requester
             response = {}
@@ -509,7 +509,7 @@ class MapleJuiceMaster:
             response['file_list'] = self.cur_filelist
             response['num_juices'] = self.cur_num_machines
             response['sender_host'] = self.node_ip
-            response['sdfs_dest_filename'] = self.cur_sdfsname
+            response['sdfs_dest_filename'] = self.cur_dest
             response['file_prefix'] = self.cur_prefix
 
             # Increment ack table for requesting nodes
