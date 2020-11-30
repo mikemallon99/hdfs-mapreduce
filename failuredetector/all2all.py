@@ -1,5 +1,6 @@
 import socket
 import random
+import logging
 import time
 
 from .membership_list import MembershipList, Status
@@ -49,7 +50,10 @@ class All2All(ProtocolBase):
             )
 
             if random.random() >= fail_rate:
-                sock.sendto(message, server_addr)
+                try:
+                    sock.sendto(message, server_addr)
+                except socket.gaierror:
+                    logging.info(f"ERROR: Sending message to {server_addr}")
 
     @staticmethod
     def send_message_interval(failure_detection_time, dissemination_time) -> float:

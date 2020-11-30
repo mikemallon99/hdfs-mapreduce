@@ -487,6 +487,7 @@ class MapleJuiceMaster:
 
         # Check if this node is the target
         if self.target_node == node:
+            logging.info(f"Setting new target node as {new_node}")
             self.target_node = new_node
 
         # Send work message to the new node
@@ -514,7 +515,7 @@ class MapleJuiceMaster:
             self.ack_lock.acquire()
             self.acktable[self.target_node] += 1
             self.ack_lock.release()
-            logging.info(f"Sending juice split data to {self.target_node}")
+            logging.info(f"Resending juice split to {self.target_node}")
             message_data = json.dumps(response).encode()
             self.mj_listener_sock.sendto(message_data, (self.target_node, MJ_HANDLER_PORT))
         elif self.cur_task == 'maple-split':
@@ -530,7 +531,7 @@ class MapleJuiceMaster:
             self.ack_lock.acquire()
             self.acktable[self.target_node] += 1
             self.ack_lock.release()
-            logging.info(f"Sending split data to {self.target_node}")
+            logging.info(f"Resending maple split to {self.target_node}")
             message_data = json.dumps(response).encode()
             self.mj_listener_sock.sendto(message_data, (self.target_node, MJ_HANDLER_PORT))
 
