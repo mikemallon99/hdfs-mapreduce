@@ -461,9 +461,6 @@ class MasterNode:
             if node_acks > 0:
                 ack_nodes.append(node)
             if node not in self.nodetable.keys():
-                self.ack_lock.acquire()
-                self.ack_table[node] = 0
-                self.ack_lock.release()
                 logging.info(f"Node {node} not detected in node table")
                 break
 
