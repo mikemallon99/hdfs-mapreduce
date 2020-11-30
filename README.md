@@ -35,4 +35,34 @@ Once the program has been started, a command line interface will start. Here you
 - `store` Lists the set of files stored (i.e. replicated) in SDFS at the process that ran this command
 - `ls [sdfsfilename]` List all VM addresses where the file is replicated at
 
+## Running MapReduce:
+- First, you must put all input files you will need into the sdfs
+    - These input files must all start with a common prefix
+- Then you must put each maple and/or juice executable you want to run
+<br>
+<br>
+- Each maple executable must have 2 functions:
+    - def map_format(list)
+        - This will take in a list of input lines as an argument
+        - This function should take the raw string of lines and return a list of key, value pairs, one for each line
+    - def maple(kv_pairs)
+        - This will take in a list of 25 key, value pairs as input
+        - This should return a list of emitted key, value pairs
+- Each juice executable needs only one function:
+    - def juice(key, values)
+        - The input to this function is a key along with all associated values
+        - This should return a list of emitted key and/or values
+- To run maple:
+    - maple <maple_exe> <num_maples> <sdfs_intermediate_filename_prefix> <sdfs_src_prefix>
+    - `maple_exe` the maple executable to run
+    - `num_maples` the number of workers to process the maple tasks
+    - `sdfs_intermediate_filename_prefix` the prefix to all output files (format=sdfs_intermediate_filename_prefix_KEY)
+    - `sdfs_src_prefix` the prefix of all input files to run maple on
+- To run juice:
+    - juice <juice_exe> <num_juices> <sdfs_intermediate_filename_prefix> <sdfs_dest_filename> delete_input={0,1}
+    - `juice_exe` the juice executable to run
+    - `num_juices` the number of workers to process the juice tasks
+    - `sdfs_intermediate_filename_prefix` the prefix to all output files from the map phase
+    - `sdfs_dest_filename` the filename to store the output to juice
+    - `delete_input` whether or not to delete the input files used for the juice tasks
 
