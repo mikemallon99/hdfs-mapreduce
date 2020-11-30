@@ -143,7 +143,7 @@ class SlaveNode():
             try:
                 tcp_socket_send.connect((target_node, TCP_PORT))
             except ConnectionRefusedError:
-                return
+                continue
             # Transfer the file to the request machine
             tcp_socket_send.send(f"{sdfsfilename}|{filesize}".ljust(4096).encode())
             with open("hdfs_files/"+localfilename, "rb") as f:
@@ -207,7 +207,7 @@ class SlaveNode():
             try:
                 tcp_socket_send.connect((request_node, TCP_PORT))
             except ConnectionRefusedError:
-                return
+                continue
             tcp_socket_send.send(f"{localfilename}|{filesize}".ljust(4096).encode())
             # Transfer the file to the request machine
             with open("hdfs_files/"+sdfsfilename, "rb") as f:
