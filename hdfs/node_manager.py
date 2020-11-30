@@ -8,6 +8,7 @@ import logging
 import json
 import threading
 import os, time
+from datetime import datetime
 
 dfs_cmds = ["start_sdfs", "master", "put", "putall", "get", "delete", "ls", "store", "write_test", "read_test"]
 fd_cmds = ["join", "list", "id", "leave", "fail"]
@@ -283,8 +284,10 @@ class NodeManager:
         Send a read request and do not terminate until the request is completed
         """
         self.slave_manager.send_read_request(filename, filename)
+        start_time = datetime.now()
         while not os.path.isfile('hdfs_files/'+filename):
-            continue
+            if (datetime.now() - start_time).total_seconds() > 15:
+                self.slave_manager.send_read_request(filename, filename)
 
     def sdfs_delete_callback(self, filename):
         self.slave_manager.send_delete_request(filename)
