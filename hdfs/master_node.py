@@ -406,11 +406,16 @@ class MasterNode:
             return
 
         # Increment ack table for requesting nodes
+        total_nodes = []
         for node in request_nodes:
             self.ack_lock.acquire()
             if node in self.acktable.keys():
                 self.acktable[node] += 1
             self.ack_lock.release()
+            if node in self.nodetable.keys():
+                total_nodes.append(node)
+        if len(total_nodes) == 0:
+            return
 
         # Inform the file node of the nodes requesting the file
         logging.info(f"Sending read request to {file_node}")
