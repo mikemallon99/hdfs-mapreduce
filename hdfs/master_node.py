@@ -82,6 +82,7 @@ class MasterNode:
         """
         # Remove node from nodetable and from all filetable entries
         node_files = self.nodetable.pop(node, [])
+        self.acktable.pop(node, [])
         for file in node_files:
             try:
                 self.filetable[file].remove(node)
@@ -360,7 +361,7 @@ class MasterNode:
         counts = 0
         while not (len(nodes) == 0 or counts >= 3) and request_nodes[0] in self.nodetable.keys():
             nodes = self.validate_acks(file_nodes)
-            if (datetime.now() - start_time).total_seconds() > 120:
+            if (datetime.now() - start_time).total_seconds() > 30:
                 # redo sends
                 logging.info(f"Trying again")
                 sock.sendto(message_data, (request_nodes[0], QHANDLER_PORT))
