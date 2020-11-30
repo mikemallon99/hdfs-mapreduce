@@ -2,6 +2,7 @@ import threading
 import logging
 import socket
 import json
+import random
 from datetime import datetime
 from typing import Optional, Dict
 
@@ -476,7 +477,7 @@ class MapleJuiceMaster:
         work = self.work_table.pop(node)
         # Reallocate work to first node and send message
         # TODO: do this better
-        new_node = self.work_table.keys()[0]
+        new_node = random.choice(list(self.work_table))
         self.work_table[new_node] = self.work_table.get(new_node, []) + work
         self.work_lock.release()
 
