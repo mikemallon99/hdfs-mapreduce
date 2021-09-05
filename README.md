@@ -1,6 +1,5 @@
-# mp2-cs425
-
-Solution to CS425 MP2 by Robbie Krokos (rkroko2) and Mike Mallon (mmallon3)
+# Python MapReduce & Distributed File System
+Developed by Robbie Krokos (rkroko2) and Mike Mallon (mmallon3)
 
 #### Requirements:
 python \>= 3.6.8
